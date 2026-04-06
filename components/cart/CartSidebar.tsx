@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect } from "react"
 import Link from "next/link"
@@ -8,21 +8,12 @@ import { useAppSelector } from "@/app/hooks"
 import { useGetCartQuery } from "@/features/auth/tokenApi"
 import styles from "@/styles/CartSidebar.module.css"
 
-export type CartSidebarItem = {
-  id: string
-  name: string
-  quantity: number
-  unitPrice: number
-  thumbnail?: string
-}
-
 type CartSidebarProps = {
-  items?: CartSidebarItem[]
   isOpen?: boolean
   onClose?: () => void
 }
 
-const MAX_VISIBLE_ITEMS = 3
+const MAX_VISIBLE_ITEMS = 4 
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("vi-VN", {
@@ -32,9 +23,6 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
-// Dung ten san pham de tao fallback thumbnail khi API chua tra ve anh.
-
-// Dùng tên sản phẩm để tạo fallback thumbnail khi API chưa trả về ảnh.
 function getProductInitials(name: string) {
   return name
     .split(" ")
@@ -44,14 +32,8 @@ function getProductInitials(name: string) {
     .join("")
 }
 
-export default function CartSidebar({
-  items,
-  isOpen = false,
-  onClose,
-}: CartSidebarProps) {
+export default function CartSidebar({ isOpen = false, onClose }: CartSidebarProps) {
   const { isAuthenticated, isCheckingAuth } = useAppSelector((state) => state.auth)
-  // Khi co items tu props, component se hien thi du lieu caller truyen vao thay vi goi API cart/me.
-  const hasCustomItems = Array.isArray(items)
 
   useEffect(() => {
     if (isOpen && !isAuthenticated) {
@@ -59,37 +41,23 @@ export default function CartSidebar({
     }
   }, [isAuthenticated, isOpen, onClose])
 
-  const {
-    data: cartResponse,
-    error,
-    isFetching,
-    isLoading,
-  } = useGetCartQuery(undefined, {
+  const { data, error, isFetching, isLoading } = useGetCartQuery(undefined, {
     refetchOnMountOrArgChange: true,
-    // Chi tai gio hang khi sidebar dang mo va auth state da on dinh.
-    skip: hasCustomItems || !isOpen || !isAuthenticated || isCheckingAuth,
+    skip: !isOpen || !isAuthenticated || isCheckingAuth,
   })
 
-  const fetchedItems = (cartResponse?.data?.items ?? []).map((item) => ({
-    id: String(item.productId),
-    name: item.productName,
-    quantity: item.quantity,
-    unitPrice: item.unitPrice,
-    thumbnail: item.thumbnail,
-  }))
-  // Gom du lieu tu props va du lieu API ve mot shape chung de JSX ben duoi khong phai tach 2 nhanh.
-  const resolvedItems = hasCustomItems ? items : fetchedItems
-  const visibleItems = resolvedItems.slice(0, MAX_VISIBLE_ITEMS)
-  const hiddenItemsCount = Math.max(resolvedItems.length - visibleItems.length, 0)
-  const totalQuantity = hasCustomItems
-    ? resolvedItems.reduce((total, item) => total + item.quantity, 0)
-    : (cartResponse?.data?.totalQuantity ?? 0)
-  const cartTotal = hasCustomItems
-    ? resolvedItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0)
-    : (cartResponse?.data?.totalAmount ?? 0)
-  const showLoadingState = !hasCustomItems && isOpen && isAuthenticated && (isLoading || isFetching)
+  // lấy data
+  const cartData = data?.data
+  // hiển thị 4 sản phẩm thêm vào mới nhất
+  const visibleItems = (cartData?.items ?? []).slice(0, MAX_VISIBLE_ITEMS)
+  // số sản phẩm bị ẩn
+  const hiddenItemsCount = Math.max((cartData?.items?.length ?? 0) - visibleItems.length, 0)
+  // biến loading 
+  const showLoadingState = isOpen && isAuthenticated && (isLoading || isFetching)
+
   const showErrorState = !showLoadingState && Boolean(error)
-  const showEmptyState = !showLoadingState && !showErrorState && resolvedItems.length === 0
+
+  const showEmptyState = !showLoadingState && !showErrorState && (cartData?.items?.length ?? 0) === 0
 
   return (
     <div
@@ -116,11 +84,11 @@ export default function CartSidebar({
           <div className={styles.headerRow}>
             <div>
               <h3 className={styles.title} id="cart-preview-title">Giỏ hàng của bạn</h3>
-              <p className={styles.subtitle}>{totalQuantity} sản phẩm đang chờ thanh toán</p>
+              <p className={styles.subtitle}>{cartData?.totalQuantity ?? 0} sản phẩm đang chờ thanh toán</p>
             </div>
 
             <div className={styles.headerActions}>
-              <p className={styles.totalBadge}>{formatCurrency(cartTotal)}</p>
+              <p className={styles.totalBadge}>{formatCurrency(cartData?.totalAmount ?? 0)}</p>
 
               <button
                 aria-label="Đóng giỏ hàng"
@@ -153,32 +121,28 @@ export default function CartSidebar({
           <>
             <div className={styles.content}>
               <div className={styles.itemList}>
-                {visibleItems.map((item) => {
-                  const itemTotal = item.quantity * item.unitPrice
+                {visibleItems.map((item) => (
+                  <article key={item.productId} className={styles.itemCard}>
+                    <div
+                      className={styles.thumbnail}
+                      style={item.thumbnail ? {
+                        backgroundImage: `url(${item.thumbnail})`,
+                        backgroundPosition: "center",
+                        backgroundSize: "cover",
+                      } : undefined}
+                    >
+                      {!item.thumbnail ? getProductInitials(item.productName) : null}
+                    </div>
 
-                  return (
-                    <article key={item.id} className={styles.itemCard}>
-                      <div
-                        className={styles.thumbnail}
-                        style={item.thumbnail ? {
-                          backgroundImage: `url(${item.thumbnail})`,
-                          backgroundPosition: "center",
-                          backgroundSize: "cover",
-                        } : undefined}
-                      >
-                        {!item.thumbnail ? getProductInitials(item.name) : null}
-                      </div>
-
-                      <div className={styles.itemInfo}>
-                        <p className={styles.itemName}>{item.name}</p>
-                        <p className={styles.itemMeta}>
-                          SL: {item.quantity} x {formatCurrency(item.unitPrice)}
-                        </p>
-                        <p className={styles.itemTotal}>{formatCurrency(itemTotal)}</p>
-                      </div>
-                    </article>
-                  )
-                })}
+                    <div className={styles.itemInfo}>
+                      <p className={styles.itemName}>{item.productName}</p>
+                      <p className={styles.itemMeta}>
+                        SL: {item.quantity} x {formatCurrency(item.unitPrice)}
+                      </p>
+                      <p className={styles.itemTotal}>{formatCurrency(item.totalPrice)}</p>
+                    </div>
+                  </article>
+                ))}
 
                 {hiddenItemsCount > 0 ? (
                   <div className={styles.overflowNotice}>
