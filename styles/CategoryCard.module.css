@@ -1,0 +1,50 @@
+.categoryCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 20px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.categoryCard__name {
+    margin: 0;
+    text-align: center;
+}
+
+.categoryCard__imageWrap {
+    width: 160px;
+    height: 160px;
+    overflow: hidden;
+    border: 1px solid black;
+    border-radius: 50%;
+}
+
+.categoryCard__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+@media (max-width: 500px) {
+    .categoryCard {
+        margin: 10px;
+    }
+
+    .categoryCard__imageWrap {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .categoryCard:hover .categoryCard__imageWrap {
+        border-color: rgba(254, 33, 33, 0.655);
+    }
+
+    .categoryCard:hover .categoryCard__image {
+        transform: scale(0.9);
+    }
+}
