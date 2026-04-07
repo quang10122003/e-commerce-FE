@@ -20,7 +20,7 @@ export const productsApi = createApi({
                 url: "/active",
                 params: {
                     page: params?.page ?? 0,
-                    size: params?.size ?? 20,
+                    size: params?.size ?? 11,
                     sort: params?.sort ?? "price,ASC",
                     ...(params?.categoryId !== undefined ? { categoryId: params.categoryId } : {}),
                 },

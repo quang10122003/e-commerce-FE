@@ -8,25 +8,31 @@ import Loading from "../Loading"
 import CategoryFilter from "./CategoryFilter"
 import ProductCard from "./ProductCard"
 import styles from "../../styles/Products.module.css"
+import Pagination from "../pagination/Pagination"
 
 export default function ProductCatalog() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const categoryIdParam = searchParams.get("categoryId")
+  const pageParam = Number(searchParams.get("page"))
   const sortValue = searchParams.get("sort") ?? "price,ASC"
   // Query string luu du lieu dang "field,direction", nen tach rieng direction de bind vao select.
   const sortDirection = sortValue.split(",")[1] ?? "ASC"
   const categoryId = categoryIdParam && !Number.isNaN(Number(categoryIdParam))
     ? Number(categoryIdParam)
     : undefined
+  const currentPage = !Number.isNaN(pageParam) && pageParam > 0
+    ? pageParam
+    : 1
 
   const { data, isLoading } = useGetActiveProductsQuery({
-    page: 0,
-    size: 20,
+    page: currentPage - 1,
+    size: 11,
     sort: sortValue,
     categoryId,
   })
   const productList: ProductType[] = data?.data?.items ?? []
+  const totalPages = data?.data?.totalPages ?? 0
 
   function updateProductFilters(nextParams: URLSearchParams) {
     // Router la source of truth cho bo loc, nen moi thao tac deu duoc day nguoc len URL.
@@ -43,12 +49,26 @@ export default function ProductCatalog() {
       params.delete("categoryId")
     }
 
+    params.delete("page")
     updateProductFilters(params)
   }
 
   function handleSortChange(event: ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams(searchParams.toString())
     params.set("sort", `price,${event.currentTarget.value}`)
+    params.delete("page")
+
+    updateProductFilters(params)
+  }
+
+  function handlePageChange(page: number) {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (page <= 1) {
+      params.delete("page")
+    } else {
+      params.set("page", String(page))
+    }
 
     updateProductFilters(params)
   }
@@ -84,8 +104,15 @@ export default function ProductCatalog() {
           <div className={styles.products__cardsGrid}>
             {productList.map((product) => (
               <ProductCard key={product.id} product={product} />
-            ))}
+            ))}  
           </div>
+        )}
+        {totalPages > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPage={totalPages}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
     </div>
