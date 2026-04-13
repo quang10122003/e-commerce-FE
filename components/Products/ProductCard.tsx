@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { ProductType } from "@/types/product/ProductType"
+import { ProductType } from "@/types/product/ProductsummerType"
 import Link from "next/link"
 
 type ProductCardProps = {
@@ -39,6 +39,6 @@ export default function ProductCard({ product }: ProductCardProps) {
         </CardContent>
       </Card>
     </Link>
-    
+
   )
 }

@@ -27,20 +27,20 @@ type UserMenuItem = {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/products", matchPath: "/products", label: "Sản phẩm" },
-  { href: "/oder", matchPath: "/oder", label: "Đơn hàng" },
+  { href: "/products", matchPath: "/products", label: "San pham" },
+  { href: "/oder", matchPath: "/oder", label: "Don hang" },
   { href: "/chat", matchPath: "/chat", label: "Chat" },
 ]
 
 const USER_MENU_ITEMS: UserMenuItem[] = [
-  { action: "profile", label: "Thông tin user" },
-  { action: "settings", label: "Cài đặt" },
-  { action: "logout", label: "Đăng xuất" },
+  { action: "profile", label: "Thong tin user" },
+  { action: "settings", label: "Cai dat" },
+  { action: "logout", label: "Dang xuat" },
 ]
 
+// Lay chu cai dau lam avatar va thong tin hien thi
 function getUserDisplayInfo(fullName?: string, email?: string) {
   const fallbackCharacter = fullName?.trim().charAt(0) || email?.trim().charAt(0) || "U"
-
   return {
     avatar: fallbackCharacter.toUpperCase(),
     email: email ?? "",
@@ -53,43 +53,39 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
+
+  // Lazy query gio hang, chi goi khi can
   const [requestCart, { isFetching: isCartSidebarLoading }] = useLazyGetCartQuery()
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false)
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false)
   const [isCartSidebarOpen, setIsCartSidebarOpen] = useState(false)
+
+  // Ref de detect click ngoai dropdown user
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userDisplay = getUserDisplayInfo(currentUser?.fullName, currentUser?.email)
 
+  // Dong dropdown khi click ra ngoai
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!userMenuRef.current?.contains(event.target as Node)) {
         setIsDesktopUserMenuOpen(false)
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside)
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Khoa scroll + dong sidebar khi nhan Escape
   useEffect(() => {
-    if (!isCartSidebarOpen) {
-      return
-    }
-
+    if (!isCartSidebarOpen) return
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsCartSidebarOpen(false)
-      }
+      if (event.key === "Escape") setIsCartSidebarOpen(false)
     }
-
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
     document.addEventListener("keydown", handleKeyDown)
-
     return () => {
       document.body.style.overflow = originalOverflow
       document.removeEventListener("keydown", handleKeyDown)
@@ -117,7 +113,6 @@ export default function Navbar() {
       handleLogout()
       return
     }
-
     setIsDesktopUserMenuOpen(false)
     setIsMobileUserMenuOpen(false)
   }
@@ -126,24 +121,21 @@ export default function Navbar() {
     dispatch(openLogin())
   }
 
+  // Chua dang nhap -> mo login, mobile -> chuyen trang, desktop -> goi API roi mo sidebar
   async function handleToggleCartSidebar() {
     if (isCartSidebarOpen) {
       handleCloseCartSidebar()
       return
     }
-
     if (!isAuthenticated) {
       handleOpenLogin()
       return
     }
-
     if (typeof window !== "undefined" && window.innerWidth <= 750) {
       router.push("/cart")
       return
     }
-
     closeAllMenus()
-
     try {
       await requestCart().unwrap()
       setIsCartSidebarOpen(true)
@@ -155,12 +147,15 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-background/90 backdrop-blur-xl">
       <Container className="relative flex items-center gap-3 py-3 max-[750px]:gap-2 max-[750px]:py-2">
+
+        {/* Logo */}
         <Link className="shrink-0" href="/">
           <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
             My shop
           </h1>
         </Link>
 
+        {/* Nav desktop */}
         <div className="hidden flex-1 lg:block">
           <ul className="flex items-center gap-6">
             {NAV_ITEMS.map((item) => (
@@ -180,16 +175,20 @@ export default function Navbar() {
           </ul>
         </div>
 
+        {/* Nhom phai: search + user + gio hang + hamburger */}
         <div className="flex flex-1 items-center justify-end gap-3 min-[751px]:min-w-[220px]">
+
+          {/* Thanh tim kiem */}
           <div className="relative flex-1 max-w-xl max-[750px]:max-w-none">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
               className="h-11 rounded-full border-slate-200 bg-slate-50 pl-11 pr-4 max-[750px]:h-10"
-              placeholder="Tìm kiếm sản phẩm..."
+              placeholder="Tim kiem san pham..."
               type="text"
             />
           </div>
 
+          {/* User menu desktop */}
           {!isCheckingAuth && isAuthenticated ? (
             <div className="relative hidden min-[751px]:block" ref={userMenuRef}>
               <button
@@ -214,6 +213,7 @@ export default function Navbar() {
                 />
               </button>
 
+              {/* Dropdown user desktop */}
               {isDesktopUserMenuOpen ? (
                 <div className="absolute right-0 top-[calc(100%+0.75rem)] w-72 rounded-[24px] border border-sky-100 bg-white p-3 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
                   <div className="flex items-center gap-3 border-b border-slate-100 px-2 pb-3">
@@ -225,7 +225,6 @@ export default function Navbar() {
                       <p className="truncate text-sm text-slate-500">{userDisplay.email}</p>
                     </div>
                   </div>
-
                   <div className="mt-2 grid gap-1">
                     {USER_MENU_ITEMS.map((item) => (
                       <button
@@ -242,15 +241,17 @@ export default function Navbar() {
               ) : null}
             </div>
           ) : (
+            /* Nut dang nhap (chua xac thuc) */
             <MainButton
               className="hidden min-[751px]:inline-flex"
               onClick={handleOpenLogin}
-              text="Đăng nhập"
+              text="Dang nhap"
               type="button"
               variant="secondary"
             />
           )}
 
+          {/* Nut gio hang */}
           <button
             aria-busy={isCartSidebarLoading}
             aria-controls="cart-preview-dialog"
@@ -261,15 +262,17 @@ export default function Navbar() {
             onClick={handleToggleCartSidebar}
             type="button"
           >
+            {/* Badge so luong */}
             <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-sky-100 px-1.5 text-[11px] font-bold text-sky-700">
               1
             </span>
             <ShoppingCart className="size-5" />
           </button>
 
+          {/* Nut hamburger (chi hien mobile) */}
           <button
             aria-expanded={isMobileMenuOpen}
-            aria-label="Mở menu"
+            aria-label="Mo menu"
             className="hidden size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm max-[750px]:inline-flex"
             onClick={() => setIsMobileMenuOpen((previousValue) => !previousValue)}
             type="button"
@@ -278,6 +281,7 @@ export default function Navbar() {
           </button>
         </div>
 
+        {/* Menu mobile dropdown */}
         <div
           className={cn(
             "absolute right-4 top-[calc(100%+0.5rem)] hidden w-[min(60vw,320px)] rounded-[24px] border border-slate-200 bg-white p-2 shadow-xl max-[750px]:block",
@@ -307,6 +311,7 @@ export default function Navbar() {
             <li className="border-t border-slate-100 pt-2">
               {!isCheckingAuth && isAuthenticated ? (
                 <>
+                  {/* Thong tin user + toggle menu con */}
                   <button
                     className="flex w-full items-center gap-3 rounded-[20px] border border-sky-100 bg-[linear-gradient(180deg,#f8fbff_0%,#eff6ff_100%)] px-4 py-3 text-left"
                     onClick={() => setIsMobileUserMenuOpen((previousValue) => !previousValue)}
@@ -329,6 +334,7 @@ export default function Navbar() {
                     />
                   </button>
 
+                  {/* Danh sach hanh dong user mobile */}
                   {isMobileUserMenuOpen ? (
                     <div className="mt-2 grid gap-1">
                       {USER_MENU_ITEMS.map((item) => (
@@ -345,6 +351,7 @@ export default function Navbar() {
                   ) : null}
                 </>
               ) : (
+                /* Nut dang nhap mobile */
                 <MainButton
                   className="w-full"
                   fullWidth
@@ -355,13 +362,14 @@ export default function Navbar() {
                   type="button"
                   variant="secondary"
                 >
-                  Đăng nhập
+                  Dang nhap
                 </MainButton>
               )}
             </li>
           </ul>
         </div>
 
+        {/* Sidebar gio hang (desktop) */}
         <CartSidebar isOpen={isCartSidebarOpen} onClose={handleCloseCartSidebar} />
       </Container>
     </nav>

@@ -8,7 +8,7 @@ import Pagination from "@/components/Products/Pagination"
 import ProductCard from "@/components/Products/ProductCard"
 import Loading from "@/components/shared/Loading"
 import { useGetActiveProductsQuery } from "@/features/product/productApi"
-import { ProductType } from "@/types/product/ProductType"
+import { ProductType } from "@/types/product/ProductsummerType"
 
 export default function ProductCatalog() {
   const router = useRouter()
@@ -106,7 +106,7 @@ export default function ProductCatalog() {
             Không có sản phẩm
           </div>
         ) : (
-              <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+          <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
             {productList.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

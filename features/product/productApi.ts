@@ -2,8 +2,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { API_BASE_URL } from "@/lib/api"
 import { ApiResponseType, PagedResponseType } from "@/types/ApiResponse/ApiResponseType"
-import { ProductType } from "@/types/product/ProductType"
+import { ProductType } from "@/types/product/ProductsummerType"
 import { GetActiveProductsRequestDto } from "@/types/product/params/GetProductActiveType"
+import { ProductDetail } from "@/types/product/productDeteilType"
 
 export const productsApi = createApi({
     reducerPath: "productsApi",
@@ -31,8 +32,13 @@ export const productsApi = createApi({
                 url: "/topSelling",
             }),
         }),
-        // getProductById : builder.query<
+        getProductById: builder.query <ApiResponseType<ProductDetail>,number>({
+            query:(id) =>({
+                url:`/${id}`,
+                method:"GET"
+            })
+        })
     }),
 })
 
-export const { useGetActiveProductsQuery, useGetActiveProductsTopSellingQuery } = productsApi
+export const { useGetActiveProductsQuery, useGetActiveProductsTopSellingQuery,useGetProductByIdQuery } = productsApi
