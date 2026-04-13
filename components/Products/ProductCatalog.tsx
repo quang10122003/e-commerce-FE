@@ -2,13 +2,13 @@
 
 import { ChangeEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+
+import CategoryFilter from "@/components/Products/CategoryFilter"
+import Pagination from "@/components/Products/Pagination"
+import ProductCard from "@/components/Products/ProductCard"
+import Loading from "@/components/shared/Loading"
 import { useGetActiveProductsQuery } from "@/features/product/productApi"
 import { ProductType } from "@/types/product/ProductType"
-import Loading from "../Loading"
-import CategoryFilter from "./CategoryFilter"
-import ProductCard from "./ProductCard"
-import styles from "../../styles/Products.module.css"
-import Pagination from "../pagination/Pagination"
 
 export default function ProductCatalog() {
   const router = useRouter()
@@ -16,14 +16,12 @@ export default function ProductCatalog() {
   const categoryIdParam = searchParams.get("categoryId")
   const pageParam = Number(searchParams.get("page"))
   const sortValue = searchParams.get("sort") ?? "price,ASC"
-  // Query string luu du lieu dang "field,direction", nen tach rieng direction de bind vao select.
   const sortDirection = sortValue.split(",")[1] ?? "ASC"
-  const categoryId = categoryIdParam && !Number.isNaN(Number(categoryIdParam))
-    ? Number(categoryIdParam)
-    : undefined
-  const currentPage = !Number.isNaN(pageParam) && pageParam > 0
-    ? pageParam
-    : 1
+  const categoryId =
+    categoryIdParam && !Number.isNaN(Number(categoryIdParam))
+      ? Number(categoryIdParam)
+      : undefined
+  const currentPage = !Number.isNaN(pageParam) && pageParam > 0 ? pageParam : 1
 
   const { data, isLoading } = useGetActiveProductsQuery({
     page: currentPage - 1,
@@ -35,7 +33,6 @@ export default function ProductCatalog() {
   const totalPages = data?.data?.totalPages ?? 0
 
   function updateProductFilters(nextParams: URLSearchParams) {
-    // Router la source of truth cho bo loc, nen moi thao tac deu duoc day nguoc len URL.
     const nextQuery = nextParams.toString()
     router.push(nextQuery ? `/products?${nextQuery}` : "/products")
   }
@@ -57,7 +54,6 @@ export default function ProductCatalog() {
     const params = new URLSearchParams(searchParams.toString())
     params.set("sort", `price,${event.currentTarget.value}`)
     params.delete("page")
-
     updateProductFilters(params)
   }
 
@@ -74,46 +70,58 @@ export default function ProductCatalog() {
   }
 
   return (
-    <div className={styles.products}>
-      <div className={styles.products__category}>
+    <div className="grid gap-6 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+      <div className="min-w-0">
         <CategoryFilter
           onSelectCategory={handleFilterCategory}
           selectedCategoryId={categoryId}
         />
       </div>
 
-      <div className={styles.products__cards}>
-        <div className={styles.products__filterBar}>
+      <div className="grid gap-5">
+        <div className="flex items-center justify-between rounded-[24px] border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Catalog
+            </p>
+            <h1 className="text-xl font-bold text-slate-950">Sản phẩm đang mở bán</h1>
+          </div>
+
           <select
             onChange={handleSortChange}
             value={sortDirection}
             id="products-filter"
-            className={styles.products__filterSelect}
+            className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-400"
             aria-label="Lọc theo giá"
           >
-            <option value="ASC">Giá thấp &rarr; cao</option>
-            <option value="DESC">Giá cao &rarr; thấp</option>
+            <option value="ASC">Giá thấp → cao</option>
+            <option value="DESC">Giá cao → thấp</option>
           </select>
         </div>
 
         {isLoading ? (
           <Loading />
         ) : productList.length === 0 ? (
-          <span>Không có sản phẩm</span>
+          <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center text-slate-500">
+            Không có sản phẩm
+          </div>
         ) : (
-          <div className={styles.products__cardsGrid}>
+              <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
             {productList.map((product) => (
               <ProductCard key={product.id} product={product} />
-            ))}  
+            ))}
           </div>
         )}
-        {totalPages > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPage={totalPages}
-            onPageChange={handlePageChange}
-          />
-        )}
+
+        {totalPages > 0 ? (
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPage={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   )

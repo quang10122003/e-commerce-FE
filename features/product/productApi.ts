@@ -31,6 +31,7 @@ export const productsApi = createApi({
                 url: "/topSelling",
             }),
         }),
+        // getProductById : builder.query<
     }),
 })
 

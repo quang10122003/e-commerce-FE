@@ -1,6 +1,6 @@
 "use client"
 
-import AuthModal from "@/components/login/AuthModal"
+import AuthModal from "@/components/auth/AuthModal"
 
 export default function AuthModals() {
     return <AuthModal />
