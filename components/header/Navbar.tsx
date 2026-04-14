@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ChevronDown, Menu, Search, ShoppingCart, X } from "lucide-react"
@@ -12,7 +12,12 @@ import MainButton from "@/components/ui/main-button"
 import { clearAuthenticatedUser } from "@/features/auth/authSlice"
 import { openLogin } from "@/features/auth/loginSlice"
 import { useLazyGetCartQuery } from "@/features/auth/tokenApi"
-import { openCartSidebar, closeCartSidebar } from "@/features/cart/cartSidebarSlice" // 👈
+import {
+  closeCartSidebar,
+  openCartSidebar,
+  resetCartTotalQuantity,
+  setCartTotalQuantity,
+} from "@/features/cart/cartSidebarSlice"
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -53,8 +58,9 @@ export default function Navbar() {
   const pathname = usePathname()
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
 
-  // 👇 Lấy isOpen từ Redux thay vì local state
+  // Trang thai sidebar va badge lay tu Redux, dung chung voi CartSidebar
   const isCartSidebarOpen = useAppSelector((state) => state.cartSidebar.isOpen)
+  const cartTotalQuantity = useAppSelector((state) => state.cartSidebar.totalQuantity)
 
   const [requestCart, { isFetching: isCartSidebarLoading }] = useLazyGetCartQuery()
 
@@ -65,6 +71,7 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userDisplay = getUserDisplayInfo(currentUser?.fullName, currentUser?.email)
 
+  // Dong dropdown user khi click ra ngoai
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!userMenuRef.current?.contains(event.target as Node)) {
@@ -75,7 +82,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Khoa scroll + dong sidebar khi nhan Escape
+  // Khoa scroll trang + lang nghe Escape khi sidebar mo
   useEffect(() => {
     if (!isCartSidebarOpen) return
     function handleKeyDown(event: KeyboardEvent) {
@@ -90,16 +97,18 @@ export default function Navbar() {
     }
   }, [isCartSidebarOpen, dispatch])
 
-  function closeAllMenus() {
+  const closeAllMenus = useCallback(() => {
     setIsDesktopUserMenuOpen(false)
     setIsMobileMenuOpen(false)
     setIsMobileUserMenuOpen(false)
-  }
+  }, [])
 
   function handleLogout() {
     clearAuthenticatedUser(dispatch)
     closeAllMenus()
     dispatch(closeCartSidebar())
+    // Xoa badge so luong khi dang xuat
+    dispatch(resetCartTotalQuantity())
   }
 
   function handleUserMenuAction(action: UserMenuItem["action"]) {
@@ -115,6 +124,7 @@ export default function Navbar() {
     dispatch(openLogin())
   }
 
+  // Chua dang nhap -> mo login, mobile -> chuyen trang, desktop -> fetch roi mo sidebar
   async function handleToggleCartSidebar() {
     if (isCartSidebarOpen) {
       dispatch(closeCartSidebar())
@@ -130,8 +140,10 @@ export default function Navbar() {
     }
     closeAllMenus()
     try {
-      await requestCart().unwrap()
-      dispatch(openCartSidebar()) 
+      const result = await requestCart().unwrap()
+      // Cap nhat badge ngay sau khi fetch thanh cong
+      dispatch(setCartTotalQuantity(result.data?.totalQuantity ?? 0))
+      dispatch(openCartSidebar())
     } catch {
       dispatch(closeCartSidebar())
     }
@@ -206,6 +218,7 @@ export default function Navbar() {
                 />
               </button>
 
+              {/* Dropdown thong tin user */}
               {isDesktopUserMenuOpen ? (
                 <div className="absolute right-0 top-[calc(100%+0.75rem)] w-72 rounded-[24px] border border-sky-100 bg-white p-3 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
                   <div className="flex items-center gap-3 border-b border-slate-100 px-2 pb-3">
@@ -253,13 +266,16 @@ export default function Navbar() {
             onClick={handleToggleCartSidebar}
             type="button"
           >
-            <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-sky-100 px-1.5 text-[11px] font-bold text-sky-700">
-              1
-            </span>
+            {/* Badge so luong, an khi gio hang trong hoac chua fetch */}
+            {cartTotalQuantity > 0 ? (
+              <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-sky-100 px-1.5 text-[11px] font-bold text-sky-700">
+                {cartTotalQuantity}
+              </span>
+            ) : null}
             <ShoppingCart className="size-5" />
           </button>
 
-          {/* Nut hamburger (chi hien mobile) */}
+          {/* Nut hamburger chi hien tren mobile */}
           <button
             aria-expanded={isMobileMenuOpen}
             aria-label="Mo menu"
