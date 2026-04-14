@@ -1,20 +1,13 @@
 import { BadgeCheck, Boxes, Star, Store, type LucideIcon } from "lucide-react"
-
 import { Card, CardContent } from "@/components/ui/card"
 import { ProductDetail } from "@/types/product/productDeteilType"
+import { useState } from "react"
 
 type ProductDetailSummaryProps = {
   product: ProductDetail
 }
 
-type SummaryItem =
-  | {
-      key: string
-      icon: LucideIcon
-      label: string
-      value: string
-    }
-  | {
+type SummaryItem ={
       key: string
       icon: LucideIcon
       label: string
@@ -38,10 +31,6 @@ function getStatusLabel(status: ProductDetail["status"]) {
 }
 
 function getStockLabel(stock: number) {
-  if (stock > 20) {
-    return "San hang giao nhanh"
-  }
-
   if (stock > 0) {
     return `Con ${stock} san pham`
   }
@@ -55,7 +44,7 @@ const summaryItems: SummaryItem[] = [
     key: "brand",
     icon: Store,
     label: "Brand",
-    value: "Nike",
+    getValue: (product: ProductDetail) => product.nameCategory
   },
   {
     key: "stock",
@@ -72,12 +61,14 @@ const summaryItems: SummaryItem[] = [
 ]
 
 export default function ProductDetailSummary({ product }: ProductDetailSummaryProps) {
+  // state show full desc product
+  const [expanded, setExpanded] = useState(false)
   return (
     <Card className="rounded-[28px] border-white/70 bg-white/90 backdrop-blur-sm">
       <CardContent className="space-y-6 p-6 sm:p-8">
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">
-            Sneakers
+            {product.nameCategory}
           </span>
           <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600">
             {getStatusLabel(product.status)}
@@ -88,7 +79,20 @@ export default function ProductDetailSummary({ product }: ProductDetailSummaryPr
           <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
             {product.name}
           </h1>
-          <p className="max-w-3xl text-base leading-7 text-slate-600">{product.description}</p>
+
+          <p
+            className={`max-w-3xl text-base leading-7 text-slate-600
+        ${expanded ? "" : "line-clamp-3"}`}
+          >
+            {product.description}
+          </p>
+
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-sm font-medium text-[#0d9488] hover:underline"
+          >
+            {expanded ? "Thu gọn" : "Xem thêm"}
+          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-5 text-sm text-slate-500">
@@ -97,13 +101,11 @@ export default function ProductDetailSummary({ product }: ProductDetailSummaryPr
             4.8/5 (126 reviews)
           </span>
           <span>{product.purchases} da ban</span>
-          <span>SKU MS-PREMIUM</span>
         </div>
 
         <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-sm font-medium text-slate-500">Gia ban</p>
-          <div className="mt-2 flex flex-wrap items-end gap-3">
-            <p className="text-3xl font-bold text-slate-950 sm:text-4xl">
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <p className="text-2xl text-[#EE4D2D] font-semibold md:text-3xl">
               {formatCurrency(product.price)}
             </p>
             <p className="pb-1 text-sm text-slate-500">Da bao gom VAT</p>
@@ -129,14 +131,14 @@ export default function ProductDetailSummary({ product }: ProductDetailSummaryPr
             return (
               <div
                 key={item.key}
-                className="rounded-[22px] border border-slate-200 bg-white px-4 py-4"
+                className="rounded-[14px] border border-slate-200 bg-white p-2"
               >
                 <div className="inline-flex rounded-full bg-slate-100 p-2 text-slate-700">
                   <Icon className="size-4" />
                 </div>
-                <p className="mt-4 text-sm font-medium text-slate-500">{item.label}</p>
+                <p className="mt-2 text-sm font-medium text-slate-500">{item.label}</p>
                 <p className="mt-1 text-base font-semibold text-slate-950">
-                  {"getValue" in item ? item.getValue(product) : item.value}
+                  {item.getValue(product)}
                 </p>
               </div>
             )

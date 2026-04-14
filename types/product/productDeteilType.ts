@@ -8,7 +8,7 @@ export type ProductDetail = {
     price: number; // BigDecimal → number
     stock: number;
     status: ProductStatus;
-    categoryId: number;
+    nameCategory: string
     thumbnail: string;
     url: string[]; // List<String> → string[]
 };

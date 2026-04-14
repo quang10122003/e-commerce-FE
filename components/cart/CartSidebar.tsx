@@ -4,15 +4,11 @@ import { useEffect } from "react"
 import Link from "next/link"
 import { X } from "lucide-react"
 
-import { useAppSelector } from "@/app/hooks"
+import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import { useGetCartQuery } from "@/features/auth/tokenApi"
+import { closeCartSidebar } from "@/features/cart/cartSidebarSlice"
 import MainButton from "@/components/ui/main-button"
 import { cn } from "@/lib/utils"
-
-type CartSidebarProps = {
-  isOpen?: boolean
-  onClose?: () => void
-}
 
 const MAX_VISIBLE_ITEMS = 4
 
@@ -33,17 +29,21 @@ function getProductInitials(name: string) {
     .join("")
 }
 
-export default function CartSidebar({
-  isOpen = false,
-  onClose,
-}: CartSidebarProps) {
+export default function CartSidebar() {
+  const dispatch = useAppDispatch()
+  const isOpen = useAppSelector((state) => state.cartSidebar.isOpen)
   const { isAuthenticated, isCheckingAuth } = useAppSelector((state) => state.auth)
 
+  function handleClose() {
+    dispatch(closeCartSidebar())
+  }
+
+  // Dong sidebar neu logout
   useEffect(() => {
     if (isOpen && !isAuthenticated) {
-      onClose?.()
+      handleClose()
     }
-  }, [isAuthenticated, isOpen, onClose])
+  }, [isAuthenticated, isOpen])
 
   const { data, error, isFetching, isLoading } = useGetCartQuery(undefined, {
     refetchOnMountOrArgChange: true,
@@ -60,11 +60,12 @@ export default function CartSidebar({
     !showErrorState &&
     (cartData?.items?.length ?? 0) === 0
 
+  // 👇 Return trực tiếp, không cần createPortal, không cần isMounted check
   return (
     <div
       aria-hidden={!isOpen}
       className={cn(
-        "fixed inset-0 z-[160] max-[750px]:hidden",
+        "fixed inset-0 z-50 overflow-x-hidden max-[750px]:hidden",
         isOpen ? "pointer-events-auto visible" : "pointer-events-none invisible"
       )}
     >
@@ -74,7 +75,7 @@ export default function CartSidebar({
           "absolute inset-0 border-none bg-slate-950/45 opacity-0 transition-opacity duration-300",
           isOpen && "opacity-100"
         )}
-        onClick={onClose}
+        onClick={handleClose}
         type="button"
       />
 
@@ -111,7 +112,7 @@ export default function CartSidebar({
               <button
                 aria-label="Đóng giỏ hàng"
                 className="inline-flex size-10 items-center justify-center rounded-full border border-sky-100 bg-white text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
-                onClick={onClose}
+                onClick={handleClose}
                 type="button"
               >
                 <X className="size-4" aria-hidden="true" />
@@ -129,18 +130,14 @@ export default function CartSidebar({
           </div>
         ) : showErrorState ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-base font-semibold text-slate-900">
-              Không thể tải giỏ hàng
-            </p>
+            <p className="text-base font-semibold text-slate-900">Không thể tải giỏ hàng</p>
             <p className="mt-2 text-sm text-slate-500">
               Hãy thử mở lại preview sau ít giây nữa.
             </p>
           </div>
         ) : showEmptyState ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-base font-semibold text-slate-900">
-              Giỏ hàng đang trống
-            </p>
+            <p className="text-base font-semibold text-slate-900">Giỏ hàng đang trống</p>
             <p className="mt-2 text-sm text-slate-500">
               Thêm vài sản phẩm để preview giỏ hàng xuất hiện ở đây.
             </p>
@@ -166,9 +163,7 @@ export default function CartSidebar({
                           : undefined
                       }
                     >
-                      {!item.thumbnail
-                        ? getProductInitials(item.productName)
-                        : null}
+                      {!item.thumbnail ? getProductInitials(item.productName) : null}
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -194,7 +189,7 @@ export default function CartSidebar({
             </div>
 
             <div className="border-t border-slate-100 bg-white p-4">
-              <Link href="/cart" onClick={onClose}>
+              <Link href="/cart" onClick={handleClose}>
                 <MainButton fullWidth className="rounded-2xl">
                   Xem trang giỏ hàng
                 </MainButton>

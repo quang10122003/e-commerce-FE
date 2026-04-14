@@ -23,20 +23,17 @@ export default function ProductDetailSpecifications({
 }: ProductDetailSpecificationsProps) {
   // thong so co dinh
   const specifications = [
-    { label: "Product ID", value: `#${product.id}` },
-    { label: "Category ID", value: String(product.categoryId) },
-    { label: "Category", value: "Sneakers" },
-    { label: "Brand", value: "Nike" },
+    { label: "Category", value: product.nameCategory },
+    { label: "Brand", value: product.nameCategory },
     { label: "Status", value: getStatusLabel(product.status) },
-    { label: "Stock", value: `${product.stock} item(s)` },
-    { label: "Purchases", value: `${product.purchases} order(s)` },
+    { label: "Stock", value: `${product.stock} san pham` },
+    { label: "Purchases", value: `${product.purchases} order` },
     { label: "Price", value: formatCurrency(product.price) },
-    { label: "Gallery", value: `${product.url.length} image(s)` },
-    { label: "SKU", value: "MS-PREMIUM" },
+    { label: "Gallery", value: `${product.url.length} image` },
   ]
 
   return (
-    <Card className="rounded-[28px] border-white/70 bg-white/90 backdrop-blur-sm">
+    <Card className="rounded-[28px] border-white/70 bg-white/90 backdrop-blur-sm  shadow-[0_10px_30px_rgba(0,0,0,0.08)] h-fit">
       <CardContent className="space-y-6 p-6 sm:p-8">
         <div className="space-y-2">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-600">

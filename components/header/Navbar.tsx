@@ -6,13 +6,13 @@ import { usePathname, useRouter } from "next/navigation"
 import { ChevronDown, Menu, Search, ShoppingCart, X } from "lucide-react"
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
-import CartSidebar from "@/components/cart/CartSidebar"
 import Container from "@/components/shared/Container"
 import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { clearAuthenticatedUser } from "@/features/auth/authSlice"
 import { openLogin } from "@/features/auth/loginSlice"
 import { useLazyGetCartQuery } from "@/features/auth/tokenApi"
+import { openCartSidebar, closeCartSidebar } from "@/features/cart/cartSidebarSlice" // 👈
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -38,7 +38,6 @@ const USER_MENU_ITEMS: UserMenuItem[] = [
   { action: "logout", label: "Dang xuat" },
 ]
 
-// Lay chu cai dau lam avatar va thong tin hien thi
 function getUserDisplayInfo(fullName?: string, email?: string) {
   const fallbackCharacter = fullName?.trim().charAt(0) || email?.trim().charAt(0) || "U"
   return {
@@ -54,19 +53,18 @@ export default function Navbar() {
   const pathname = usePathname()
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
 
-  // Lazy query gio hang, chi goi khi can
+  // 👇 Lấy isOpen từ Redux thay vì local state
+  const isCartSidebarOpen = useAppSelector((state) => state.cartSidebar.isOpen)
+
   const [requestCart, { isFetching: isCartSidebarLoading }] = useLazyGetCartQuery()
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false)
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false)
-  const [isCartSidebarOpen, setIsCartSidebarOpen] = useState(false)
 
-  // Ref de detect click ngoai dropdown user
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userDisplay = getUserDisplayInfo(currentUser?.fullName, currentUser?.email)
 
-  // Dong dropdown khi click ra ngoai
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!userMenuRef.current?.contains(event.target as Node)) {
@@ -81,7 +79,7 @@ export default function Navbar() {
   useEffect(() => {
     if (!isCartSidebarOpen) return
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsCartSidebarOpen(false)
+      if (event.key === "Escape") dispatch(closeCartSidebar())
     }
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
@@ -90,7 +88,7 @@ export default function Navbar() {
       document.body.style.overflow = originalOverflow
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isCartSidebarOpen])
+  }, [isCartSidebarOpen, dispatch])
 
   function closeAllMenus() {
     setIsDesktopUserMenuOpen(false)
@@ -98,14 +96,10 @@ export default function Navbar() {
     setIsMobileUserMenuOpen(false)
   }
 
-  function handleCloseCartSidebar() {
-    setIsCartSidebarOpen(false)
-  }
-
   function handleLogout() {
     clearAuthenticatedUser(dispatch)
     closeAllMenus()
-    handleCloseCartSidebar()
+    dispatch(closeCartSidebar())
   }
 
   function handleUserMenuAction(action: UserMenuItem["action"]) {
@@ -121,10 +115,9 @@ export default function Navbar() {
     dispatch(openLogin())
   }
 
-  // Chua dang nhap -> mo login, mobile -> chuyen trang, desktop -> goi API roi mo sidebar
   async function handleToggleCartSidebar() {
     if (isCartSidebarOpen) {
-      handleCloseCartSidebar()
+      dispatch(closeCartSidebar())
       return
     }
     if (!isAuthenticated) {
@@ -138,9 +131,9 @@ export default function Navbar() {
     closeAllMenus()
     try {
       await requestCart().unwrap()
-      setIsCartSidebarOpen(true)
+      dispatch(openCartSidebar()) 
     } catch {
-      handleCloseCartSidebar()
+      dispatch(closeCartSidebar())
     }
   }
 
@@ -176,7 +169,7 @@ export default function Navbar() {
         </div>
 
         {/* Nhom phai: search + user + gio hang + hamburger */}
-        <div className="flex flex-1 items-center justify-end gap-3 min-[751px]:min-w-[220px]">
+        <div className="flex flex-1 items-center justify-end gap-3 min-[751px]:min-w-55">
 
           {/* Thanh tim kiem */}
           <div className="relative flex-1 max-w-xl max-[750px]:max-w-none">
@@ -193,7 +186,7 @@ export default function Navbar() {
             <div className="relative hidden min-[751px]:block" ref={userMenuRef}>
               <button
                 className="inline-flex min-w-0 items-center gap-3 rounded-full border border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-2 py-1.5 text-left shadow-sm transition hover:border-sky-200"
-                onClick={() => setIsDesktopUserMenuOpen((previousValue) => !previousValue)}
+                onClick={() => setIsDesktopUserMenuOpen((prev) => !prev)}
                 type="button"
               >
                 <span className="inline-flex size-9 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-sm font-bold text-white">
@@ -213,7 +206,6 @@ export default function Navbar() {
                 />
               </button>
 
-              {/* Dropdown user desktop */}
               {isDesktopUserMenuOpen ? (
                 <div className="absolute right-0 top-[calc(100%+0.75rem)] w-72 rounded-[24px] border border-sky-100 bg-white p-3 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
                   <div className="flex items-center gap-3 border-b border-slate-100 px-2 pb-3">
@@ -241,7 +233,6 @@ export default function Navbar() {
               ) : null}
             </div>
           ) : (
-            /* Nut dang nhap (chua xac thuc) */
             <MainButton
               className="hidden min-[751px]:inline-flex"
               onClick={handleOpenLogin}
@@ -262,7 +253,6 @@ export default function Navbar() {
             onClick={handleToggleCartSidebar}
             type="button"
           >
-            {/* Badge so luong */}
             <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-sky-100 px-1.5 text-[11px] font-bold text-sky-700">
               1
             </span>
@@ -274,7 +264,7 @@ export default function Navbar() {
             aria-expanded={isMobileMenuOpen}
             aria-label="Mo menu"
             className="hidden size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm max-[750px]:inline-flex"
-            onClick={() => setIsMobileMenuOpen((previousValue) => !previousValue)}
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             type="button"
           >
             {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -311,10 +301,9 @@ export default function Navbar() {
             <li className="border-t border-slate-100 pt-2">
               {!isCheckingAuth && isAuthenticated ? (
                 <>
-                  {/* Thong tin user + toggle menu con */}
                   <button
                     className="flex w-full items-center gap-3 rounded-[20px] border border-sky-100 bg-[linear-gradient(180deg,#f8fbff_0%,#eff6ff_100%)] px-4 py-3 text-left"
-                    onClick={() => setIsMobileUserMenuOpen((previousValue) => !previousValue)}
+                    onClick={() => setIsMobileUserMenuOpen((prev) => !prev)}
                     type="button"
                   >
                     <span className="inline-flex size-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-sm font-bold text-white">
@@ -334,7 +323,6 @@ export default function Navbar() {
                     />
                   </button>
 
-                  {/* Danh sach hanh dong user mobile */}
                   {isMobileUserMenuOpen ? (
                     <div className="mt-2 grid gap-1">
                       {USER_MENU_ITEMS.map((item) => (
@@ -351,7 +339,6 @@ export default function Navbar() {
                   ) : null}
                 </>
               ) : (
-                /* Nut dang nhap mobile */
                 <MainButton
                   className="w-full"
                   fullWidth
@@ -369,8 +356,6 @@ export default function Navbar() {
           </ul>
         </div>
 
-        {/* Sidebar gio hang (desktop) */}
-        <CartSidebar isOpen={isCartSidebarOpen} onClose={handleCloseCartSidebar} />
       </Container>
     </nav>
   )

@@ -6,12 +6,10 @@ import { cn } from "@/lib/utils"
 
 type ProductDetailGalleryProps = {
   images: string[]
-  productName: string
 }
 
 export default function ProductDetailGallery({
-  images,
-  productName,
+  images
 }: ProductDetailGalleryProps) {
   const [activeImage, setActiveImage] = useState(0)
   const currentImage = images[activeImage] ?? images[0]
@@ -70,7 +68,7 @@ export default function ProductDetailGallery({
 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            alt={productName}
+            alt=""
             className="aspect-4/4.5 w-full object-cover sm:aspect-[4/3.9]"
             src={currentImage}
           />
@@ -93,7 +91,7 @@ export default function ProductDetailGallery({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                alt={`${productName} ${index + 1}`}
+                alt=""
                 className="aspect-square w-full object-cover"
                 src={image}
               />

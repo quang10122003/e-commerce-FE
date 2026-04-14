@@ -130,7 +130,7 @@ function NotificationBanner({ open, title, message, variant, onClose }: Notifica
     }, [open])
 
     return (
-        <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex justify-end px-4 sm:top-6 sm:px-6">
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] overflow-x-hidden flex justify-end px-4 sm:top-6 sm:px-6">
             <div
                 className={cn(
                     "pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-[28px] border shadow-[0_24px_60px_-24px_rgba(15,23,42,0.38)] backdrop-blur-xl transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none",

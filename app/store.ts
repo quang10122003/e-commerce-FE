@@ -5,12 +5,14 @@ import loginReducer from "../features/auth/loginSlice"
 import { tokenApi } from "@/features/auth/tokenApi"
 import { categoryApi } from "@/features/category/categoryApi"
 import { productsApi } from "@/features/product/productApi"
+import cartSidebarReducer from "@/features/cart/cartSidebarSlice"
 
 export const store = configureStore({
     reducer: {
         // Global UI State
         login: loginReducer,
         auth: authReducer,
+        cartSidebar: cartSidebarReducer,
 
         // Server State (RTK Query)
         [productsApi.reducerPath]: productsApi.reducer,
