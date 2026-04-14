@@ -5,6 +5,8 @@ import MainButton from "../ui/main-button"
 import Image from "next/image"
 import { useAddCartMutation } from "@/features/auth/tokenApi"
 import AddCartRequest from "@/types/cart/AddCartRequest"
+import { useNotification } from "../ui/NotificationProvider"
+import { extractErrorMessage } from "@/lib/error"
 
 type ProductCardProps = {
   product: ProductType
@@ -19,15 +21,39 @@ function formatCurrency(value: number) {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-
+  const { showNotification } = useNotification()
   const [addCart] = useAddCartMutation()
-  async function handldeAddCart(productID: number, event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault()
-    event.stopPropagation()
-    const objCart: AddCartRequest = {
+
+  // xử lý call api add cart
+  async function handleAddCartRequest(productID: number) {
+    const addcartRequest: AddCartRequest = {
       productId: productID
     }
-    await addCart(objCart).unwrap()
+    return await addCart(addcartRequest).unwrap()
+  }
+
+  // xử lý repone và thông báo cho add cart
+  async function handldeAddCart(
+    productID: number,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    try {
+      await handleAddCartRequest(productID)
+
+      showNotification("Thêm sản phẩm vào giỏ hàng thành công", {
+        variant: "success"
+      })
+
+    } catch (error) {
+      const errMsg = extractErrorMessage(error)
+
+      showNotification(errMsg, {
+        variant: "error"
+      })
+    }
   }
 
   const descriptionText = product.description ?? "Mô tả đang được cập nhật."
