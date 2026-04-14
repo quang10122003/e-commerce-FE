@@ -15,7 +15,7 @@ type ProductDetailClientProps = {
 
 export default function ProductDetailClient({ id }: ProductDetailClientProps) {
 
-    const { data, isLoading, error } = useGetProductByIdQuery(id)
+    const { data } = useGetProductByIdQuery(id)
     // return null nếu ko có data
     if (!data?.data) return null
 

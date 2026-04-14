@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useEffect } from "react"
+import { useEffect, useCallback } from "react"
 import Link from "next/link"
 import { X } from "lucide-react"
 
@@ -20,6 +20,7 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
+// lấy chữ cái đầu trong tên sp làm avatar 
 function getProductInitials(name: string) {
   return name
     .split(" ")
@@ -34,17 +35,19 @@ export default function CartSidebar() {
   const isOpen = useAppSelector((state) => state.cartSidebar.isOpen)
   const { isAuthenticated, isCheckingAuth } = useAppSelector((state) => state.auth)
 
-  function handleClose() {
+  // useCallback de dam bao reference on dinh, tranh warning missing dependency
+  const handleClose = useCallback(() => {
     dispatch(closeCartSidebar())
-  }
+  }, [dispatch])
 
-  // Dong sidebar neu logout
+  // Tu dong dong sidebar khi user dang xuat
   useEffect(() => {
     if (isOpen && !isAuthenticated) {
       handleClose()
     }
-  }, [isAuthenticated, isOpen])
+  }, [isAuthenticated, isOpen, handleClose])
 
+  // Chi fetch khi sidebar dang mo va user da xac thuc
   const { data, error, isFetching, isLoading } = useGetCartQuery(undefined, {
     refetchOnMountOrArgChange: true,
     skip: !isOpen || !isAuthenticated || isCheckingAuth,
@@ -53,6 +56,8 @@ export default function CartSidebar() {
   const cartData = data?.data
   const visibleItems = (cartData?.items ?? []).slice(0, MAX_VISIBLE_ITEMS)
   const hiddenItemsCount = Math.max((cartData?.items?.length ?? 0) - visibleItems.length, 0)
+
+  // Tinh toan trang thai hien thi de render dung UI tuong ung
   const showLoadingState = isOpen && isAuthenticated && (isLoading || isFetching)
   const showErrorState = !showLoadingState && Boolean(error)
   const showEmptyState =
@@ -60,8 +65,8 @@ export default function CartSidebar() {
     !showErrorState &&
     (cartData?.items?.length ?? 0) === 0
 
-  // 👇 Return trực tiếp, không cần createPortal, không cần isMounted check
   return (
+    // Overlay toan man hinh, an hoan toan khi dong de khong chiem dung pointer events
     <div
       aria-hidden={!isOpen}
       className={cn(
@@ -69,8 +74,9 @@ export default function CartSidebar() {
         isOpen ? "pointer-events-auto visible" : "pointer-events-none invisible"
       )}
     >
+       {/* Backdrop mo, click de dong sidebar */}
       <button
-        aria-label="Đóng xem trước giỏ hàng"
+        aria-label="Dong xem truoc gio hang"
         className={cn(
           "absolute inset-0 border-none bg-slate-950/45 opacity-0 transition-opacity duration-300",
           isOpen && "opacity-100"
@@ -79,6 +85,7 @@ export default function CartSidebar() {
         type="button"
       />
 
+     {/* Panel chinh truot tu phai vao, dung role=dialog de ho tro accessibility */}
       <div
         aria-labelledby="cart-preview-title"
         aria-modal="true"
@@ -97,10 +104,10 @@ export default function CartSidebar() {
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-950" id="cart-preview-title">
-                Giỏ hàng của bạn
+                Gio hang cua ban
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                {cartData?.totalQuantity ?? 0} sản phẩm đang chờ thanh toán
+                {cartData?.totalQuantity ?? 0} san pham dang cho thanh toan
               </p>
             </div>
 
@@ -110,36 +117,37 @@ export default function CartSidebar() {
               </p>
 
               <button
-                aria-label="Đóng giỏ hàng"
+                aria-label="Dong gio hang"
                 className="inline-flex size-10 items-center justify-center rounded-full border border-sky-100 bg-white text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                 onClick={handleClose}
                 type="button"
               >
-                <X className="size-4" aria-hidden="true" />
+                <X aria-hidden="true" className="size-4" />
               </button>
             </div>
           </div>
         </div>
 
+         {/* Render noi dung tuong ung voi trang thai: loading / error / trong / co hang */}
         {showLoadingState ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-base font-semibold text-slate-900">Đang tải giỏ hàng</p>
+            <p className="text-base font-semibold text-slate-900">Dang tai gio hang</p>
             <p className="mt-2 text-sm text-slate-500">
-              Dữ liệu giỏ hàng của bạn đang được đồng bộ.
+              Du lieu gio hang cua ban dang duoc dong bo.
             </p>
           </div>
         ) : showErrorState ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-base font-semibold text-slate-900">Không thể tải giỏ hàng</p>
+            <p className="text-base font-semibold text-slate-900">Khong the tai gio hang</p>
             <p className="mt-2 text-sm text-slate-500">
-              Hãy thử mở lại preview sau ít giây nữa.
+              Hay thu mo lai preview sau it giay nua.
             </p>
           </div>
         ) : showEmptyState ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-base font-semibold text-slate-900">Giỏ hàng đang trống</p>
+            <p className="text-base font-semibold text-slate-900">Gio hang dang trong</p>
             <p className="mt-2 text-sm text-slate-500">
-              Thêm vài sản phẩm để preview giỏ hàng xuất hiện ở đây.
+              Them vai san pham de preview gio hang xuat hien o day.
             </p>
           </div>
         ) : (
@@ -151,6 +159,7 @@ export default function CartSidebar() {
                     key={item.productId}
                     className="flex items-center gap-3 rounded-[20px] border border-slate-100 bg-slate-50/90 p-3"
                   >
+                    {/* // Thumbnail san pham, fallback chu viet tat neu khong co anh */}
                     <div
                       className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#dbeafe_0%,#bfdbfe_45%,#e0f2fe_100%)] text-sm font-bold text-sky-800"
                       style={
@@ -180,9 +189,10 @@ export default function CartSidebar() {
                   </article>
                 ))}
 
+                {/* // Hien thi so san pham bi an neu vuot qua MAX_VISIBLE_ITEMS */}
                 {hiddenItemsCount > 0 ? (
                   <div className="rounded-[20px] border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500">
-                    Còn {hiddenItemsCount} sản phẩm khác trong giỏ hàng.
+                    Con {hiddenItemsCount} san pham khac trong gio hang.
                   </div>
                 ) : null}
               </div>
@@ -191,7 +201,7 @@ export default function CartSidebar() {
             <div className="border-t border-slate-100 bg-white p-4">
               <Link href="/cart" onClick={handleClose}>
                 <MainButton fullWidth className="rounded-2xl">
-                  Xem trang giỏ hàng
+                  Xem trang gio hang
                 </MainButton>
               </Link>
             </div>
