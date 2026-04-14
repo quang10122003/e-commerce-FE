@@ -18,7 +18,7 @@ export default function TopSellingProducts() {
         </h2>
       </div>
 
-      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]">
         {products.map((product) => (
           <ProductCard product={product} key={product.id} />
         ))}

@@ -31,7 +31,9 @@ export default function HeroSection() {
 
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/products">
-              <MainButton size="large">Mua ngay</MainButton>
+              <MainButton 
+              size="large"
+              >Mua ngay</MainButton>
             </Link>
 
             <Link href="/products">

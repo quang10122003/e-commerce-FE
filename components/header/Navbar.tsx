@@ -11,14 +11,13 @@ import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { clearAuthenticatedUser } from "@/features/auth/authSlice"
 import { openLogin } from "@/features/auth/loginSlice"
-import { useLazyGetCartQuery } from "@/features/auth/tokenApi"
+import { useGetCartQuery, useLazyGetCartQuery } from "@/features/auth/tokenApi"
 import {
   closeCartSidebar,
   openCartSidebar,
-  resetCartTotalQuantity,
-  setCartTotalQuantity,
 } from "@/features/cart/cartSidebarSlice"
 import { cn } from "@/lib/utils"
+import { useNotification } from "../ui/NotificationProvider"
 
 type NavItem = {
   href: string
@@ -53,15 +52,29 @@ function getUserDisplayInfo(fullName?: string, email?: string) {
 }
 
 export default function Navbar() {
+  const { showNotification } = useNotification()
   const dispatch = useAppDispatch()
   const router = useRouter()
   const pathname = usePathname()
+  const HIDDEN_SEARCH_ROUTES: string[] = ["/", "/products/"]
+
+  const showSearch = !HIDDEN_SEARCH_ROUTES.some((route) => {
+    if (route.endsWith("/") && route.length > 1) {
+      return pathname.startsWith(route)
+    }
+    return pathname === route
+  })
+
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
-
-  // Trang thai sidebar va badge lay tu Redux, dung chung voi CartSidebar
   const isCartSidebarOpen = useAppSelector((state) => state.cartSidebar.isOpen)
-  const cartTotalQuantity = useAppSelector((state) => state.cartSidebar.totalQuantity)
 
+  // Lấy số lượng realtime từ RTK Query, chỉ fetch khi đã đăng nhập
+  const { data: cartData } = useGetCartQuery(undefined, {
+    skip: !isAuthenticated,
+  })
+  const cartTotalQuantity = cartData?.data?.totalQuantity ?? 0
+
+  // Lazy query chỉ dùng để fetch chi tiết khi mở sidebar
   const [requestCart, { isFetching: isCartSidebarLoading }] = useLazyGetCartQuery()
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -71,7 +84,6 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userDisplay = getUserDisplayInfo(currentUser?.fullName, currentUser?.email)
 
-  // Dong dropdown user khi click ra ngoai
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!userMenuRef.current?.contains(event.target as Node)) {
@@ -82,7 +94,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Khoa scroll trang + lang nghe Escape khi sidebar mo
   useEffect(() => {
     if (!isCartSidebarOpen) return
     function handleKeyDown(event: KeyboardEvent) {
@@ -107,8 +118,7 @@ export default function Navbar() {
     clearAuthenticatedUser(dispatch)
     closeAllMenus()
     dispatch(closeCartSidebar())
-    // Xoa badge so luong khi dang xuat
-    dispatch(resetCartTotalQuantity())
+    showNotification("dang xuat thanh cong", { variant: "success" })
   }
 
   function handleUserMenuAction(action: UserMenuItem["action"]) {
@@ -124,7 +134,6 @@ export default function Navbar() {
     dispatch(openLogin())
   }
 
-  // Chua dang nhap -> mo login, mobile -> chuyen trang, desktop -> fetch roi mo sidebar
   async function handleToggleCartSidebar() {
     if (isCartSidebarOpen) {
       dispatch(closeCartSidebar())
@@ -140,9 +149,7 @@ export default function Navbar() {
     }
     closeAllMenus()
     try {
-      const result = await requestCart().unwrap()
-      // Cap nhat badge ngay sau khi fetch thanh cong
-      dispatch(setCartTotalQuantity(result.data?.totalQuantity ?? 0))
+      await requestCart().unwrap()
       dispatch(openCartSidebar())
     } catch {
       dispatch(closeCartSidebar())
@@ -187,7 +194,9 @@ export default function Navbar() {
           <div className="relative flex-1 max-w-xl max-[750px]:max-w-none">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
-              className="h-11 rounded-full border-slate-200 bg-slate-50 pl-11 pr-4 max-[750px]:h-10"
+              className={cn("h-11 rounded-full border-slate-200 bg-slate-50 pl-11 pr-4 max-[750px]:h-10",
+                !showSearch && "pointer-events-none bg-[#f0f0f0] opacity-70"
+              )}
               placeholder="Tim kiem san pham..."
               type="text"
             />
@@ -218,7 +227,6 @@ export default function Navbar() {
                 />
               </button>
 
-              {/* Dropdown thong tin user */}
               {isDesktopUserMenuOpen ? (
                 <div className="absolute right-0 top-[calc(100%+0.75rem)] w-72 rounded-[24px] border border-sky-100 bg-white p-3 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
                   <div className="flex items-center gap-3 border-b border-slate-100 px-2 pb-3">
@@ -266,7 +274,6 @@ export default function Navbar() {
             onClick={handleToggleCartSidebar}
             type="button"
           >
-            {/* Badge so luong, an khi gio hang trong hoac chua fetch */}
             {cartTotalQuantity > 0 ? (
               <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-sky-100 px-1.5 text-[11px] font-bold text-sky-700">
                 {cartTotalQuantity}
@@ -275,7 +282,7 @@ export default function Navbar() {
             <ShoppingCart className="size-5" />
           </button>
 
-          {/* Nut hamburger chi hien tren mobile */}
+          {/* Nut hamburger */}
           <button
             aria-expanded={isMobileMenuOpen}
             aria-label="Mo menu"

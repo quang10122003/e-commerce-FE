@@ -106,7 +106,7 @@ export default function ProductCatalog() {
             Không có sản phẩm
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+              <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]">
             {productList.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
