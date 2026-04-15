@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { RegisterOptions, useForm, useWatch } from "react-hook-form"
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
@@ -11,6 +12,11 @@ import { setAuthenticatedUser } from "@/features/auth/authSlice"
 import { setStoredAuth } from "@/features/auth/authStorage"
 import { useLoginMutation, useSignupMutation } from "@/features/auth/loginApi"
 import { closeLogin } from "@/features/auth/loginSlice"
+import {
+  clearPendingRedirectUrls,
+  popPendingRedirectUrl,
+} from "@/features/auth/privateApi"
+import { tokenApi } from "@/features/auth/tokenApi"
 import { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import { AuthResponse } from "@/types/Auth/AuthResponse"
 import { cn } from "@/lib/utils"
@@ -84,6 +90,7 @@ function getApiErrorMessage(error: unknown) {
 
 export default function AuthModal() {
   const dispatch = useAppDispatch()
+  const router = useRouter()
   const isOpen = useAppSelector((state) => state.login.isOpen)
   const [mode, setMode] = useState<AuthMode>("login")
   const [login, { isLoading: isLoginLoading }] = useLoginMutation()
@@ -169,6 +176,7 @@ export default function AuthModal() {
 
   function handleCloseModal() {
     resetFormState()
+    clearPendingRedirectUrls()
     dispatch(closeLogin())
   }
 
@@ -207,7 +215,16 @@ export default function AuthModal() {
         variant: "success",
       })
 
+      const redirectUrl = popPendingRedirectUrl()
+
+      dispatch(tokenApi.util.resetApiState())
       handleCloseModal()
+
+      if (redirectUrl) {
+        router.replace(redirectUrl)
+      }
+
+      router.refresh()
     } catch (error) {
       setError("root", {
         type: "server",

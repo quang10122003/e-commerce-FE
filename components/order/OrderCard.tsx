@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Card, CardContent } from "../ui/card";
+import MainButton from "../ui/main-button";
 export default function OrderCard() {
     return (
         <Card className="p-4 rounded-none">
@@ -32,38 +33,47 @@ export default function OrderCard() {
                 </div>
             </div>
             <CardContent>
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                <div className="flex flex-col gap-3">
 
-                    {/* Row trên: ảnh + text (cả mobile lẫn desktop) */}
-                    <div className="flex items-start gap-3 md:flex-1 md:min-w-0">
+                    {/* row 1: info san pham */}
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
 
-                        {/* Ảnh */}
-                        <div className="relative shrink-0 w-16 h-16 md:w-30 md:h-30 rounded-lg bg-gray-100 overflow-hidden">
-                            <Image
-                                src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
-                                alt=""
-                                fill
-                            />
+                        <div className="flex items-start gap-3 md:flex-1 md:min-w-0">
+
+                            <div className="relative shrink-0 w-16 h-16 md:w-30 md:h-30 rounded-lg bg-gray-100 overflow-hidden">
+                                <Image
+                                    src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+                                    alt=""
+                                    fill
+                                />
+                            </div>
+
+                            <div className="flex-1 min-w-0 mx-4">
+                                <p className="font-normal text-[13px] md:text-[15px] text-gray-900 leading-snug line-clamp-2">
+                                    [MUA 2 GIẢM 42%] Combo 2 Gel bí đao rửa mặt giảm dầu và mụn Cocoon 310ml
+                                </p>
+                                <p className="text-xs md:text-sm text-gray-400 mt-1">x1</p>
+                            </div>
+
+                            <div className="hidden md:block shrink-0 text-right">
+                                <span className="text-[15px] font-semibold text-red-600">347.000đ</span>
+                            </div>
                         </div>
 
-                        {/* Text */}
-                        <div className="flex-1 min-w-0 mx-4">
-                            <p className=" font-normal text-[13px] md:text-[15px] text-gray-900 leading-snug line-clamp-2">
-                                [MUA 2 GIẢM 42%] Combo 2 Gel bí đao rửa mặt giảm dầu và mụn Cocoon 310ml
-                            </p>
-                            <p className="text-xs md:text-sm text-gray-400 mt-1 ">x1</p>
-                        </div>
-
-                        {/* Giá — chỉ hiện trên desktop, nằm cùng hàng */}
-                        <div className="hidden md:block shrink-0 text-right">
+                        <div className="flex justify-end items-center pt-2 border-t border-gray-100 md:hidden">
                             <span className="text-[15px] font-semibold text-red-600">347.000đ</span>
                         </div>
-
                     </div>
 
-                    {/* Row dưới: giá — chỉ hiện trên mobile */}
-                    <div className="flex justify-end items-center pt-2 border-t border-gray-100 md:hidden">
-                        <span className="text-[15px] font-semibold text-red-600">347.000đ</span>
+                    {/* row 2: button */}
+                    <div className="flex justify-end">
+                        <MainButton
+                            variant="outline"
+                            className="rounded-[10px] bg-red-500 text-white min-w-30 md:min-w-40 
+                   hover:bg-red-600 hover:text-white hover:-translate-y-1 transition-all duration-300"
+                        >
+                            Đánh Giá
+                        </MainButton>
                     </div>
 
                 </div>

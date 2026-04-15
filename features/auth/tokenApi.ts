@@ -4,6 +4,7 @@ import { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse"
 import { privateBaseQuery } from "@/features/auth/privateBaseQuery"
 import { CartResponse } from "@/types/cart/CartResponse"
 import AddCartRequest from "@/types/cart/AddCartRequest"
+import { OrderResponse } from "@/types/order/OrderResponse"
 
 export const tokenApi = createApi({
     reducerPath: "tokenApi",
@@ -29,6 +30,12 @@ export const tokenApi = createApi({
                 body:body
             }),
             invalidatesTags:["cart"]
+        }),
+        getOrder: builder.query <ApiResponseType<OrderResponse[]>,void>({
+            query:()=>({
+                url:"/orders/me",
+                method:"GET"
+            })
         })
     }),
 })
@@ -38,5 +45,6 @@ export const {
     useLazyGetMeQuery,
     useGetCartQuery,
     useLazyGetCartQuery,
-    useAddCartMutation
+    useAddCartMutation,
+    useGetOrderQuery
 } = tokenApi

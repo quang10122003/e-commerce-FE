@@ -12,6 +12,8 @@ import {
 } from "@/features/auth/authStorage"
 
 const ACCESS_TOKEN_REFRESH_WINDOW_MS = 10 * 60 * 1000
+const LOGIN_REDIRECT_STACK_MAX = 20
+const loginRedirectStack: string[] = []
 
 type PrivateRequestMetadata = {
     // Danh dau request da retry de response interceptor khong lap vo han.
@@ -35,6 +37,48 @@ const refreshApi = axios.create({
     baseURL: API_BASE_URL,
 })
 
+function normalizeInternalRoute(url?: string | null) {
+    if (!url) {
+        return null
+    }
+
+    const trimmedUrl = url.trim()
+
+    if (!trimmedUrl.startsWith("/") || trimmedUrl.startsWith("//")) {
+        return null
+    }
+
+    return trimmedUrl
+}
+
+export function pushPendingRedirectUrl(url?: string | null) {
+    const normalizedUrl = normalizeInternalRoute(url)
+
+    if (!normalizedUrl) {
+        return null
+    }
+
+    const previousUrl = loginRedirectStack[loginRedirectStack.length - 1]
+
+    if (previousUrl !== normalizedUrl) {
+        loginRedirectStack.push(normalizedUrl)
+
+        if (loginRedirectStack.length > LOGIN_REDIRECT_STACK_MAX) {
+            loginRedirectStack.shift()
+        }
+    }
+
+    return normalizedUrl
+}
+
+export function popPendingRedirectUrl() {
+    return loginRedirectStack.pop() ?? null
+}
+
+export function clearPendingRedirectUrls() {
+    loginRedirectStack.length = 0
+}
+
 function normalizeRequestUrl(url?: string) {
     if (!url) {
         return ""
@@ -46,6 +90,20 @@ function normalizeRequestUrl(url?: string) {
 function shouldPromptReLogin(url?: string) {
     // /auth/me thuong duoc goi trong luc bootstrap app, nen tranh bat login modal qua som.
     return normalizeRequestUrl(url) !== "auth/me"
+}
+
+function getCurrentBrowserPath() {
+    if (typeof window === "undefined") {
+        return null
+    }
+
+    const { hash, pathname, search } = window.location
+
+    if (!pathname.startsWith("/")) {
+        return null
+    }
+
+    return `${pathname}${search}${hash}`
 }
 
 function clearAuthState(api?: BaseQueryApi) {
@@ -67,6 +125,7 @@ function handleUnrecoverableSession(
         return
     }
 
+    pushPendingRedirectUrl(getCurrentBrowserPath())
     api.dispatch(openLogin())
 }
 

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { clearAuthenticatedUser } from "@/features/auth/authSlice"
 import { openLogin } from "@/features/auth/loginSlice"
+import { pushPendingRedirectUrl } from "@/features/auth/privateApi"
 import { useGetCartQuery, useLazyGetCartQuery } from "@/features/auth/tokenApi"
 import {
   closeCartSidebar,
@@ -130,7 +131,16 @@ export default function Navbar() {
     setIsMobileUserMenuOpen(false)
   }
 
+  function getCurrentRoute() {
+    if (typeof window === "undefined") {
+      return pathname
+    }
+
+    return `${window.location.pathname}${window.location.search}${window.location.hash}`
+  }
+
   function handleOpenLogin() {
+    pushPendingRedirectUrl(getCurrentRoute())
     dispatch(openLogin())
   }
 
@@ -204,7 +214,7 @@ export default function Navbar() {
 
           {/* User menu desktop */}
           {!isCheckingAuth && isAuthenticated ? (
-            <div className="relative hidden min-[751px]:block" ref={userMenuRef}>
+            <div className="relative hidden lg:block" ref={userMenuRef}>
               <button
                 className="inline-flex min-w-0 items-center gap-3 rounded-full border border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-2 py-1.5 text-left shadow-sm transition hover:border-sky-200"
                 onClick={() => setIsDesktopUserMenuOpen((prev) => !prev)}
@@ -255,7 +265,7 @@ export default function Navbar() {
             </div>
           ) : (
             <MainButton
-              className="hidden min-[751px]:inline-flex"
+              className="hidden lg:inline-flex"
               onClick={handleOpenLogin}
               text="Dang nhap"
               type="button"
@@ -286,7 +296,7 @@ export default function Navbar() {
           <button
             aria-expanded={isMobileMenuOpen}
             aria-label="Mo menu"
-            className="hidden size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm max-[750px]:inline-flex"
+            className="hidden size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm max-lg:inline-flex"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             type="button"
           >
@@ -297,7 +307,7 @@ export default function Navbar() {
         {/* Menu mobile dropdown */}
         <div
           className={cn(
-            "absolute right-4 top-[calc(100%+0.5rem)] hidden w-[min(60vw,320px)] rounded-[24px] border border-slate-200 bg-white p-2 shadow-xl max-[750px]:block",
+            "absolute right-4 top-[calc(100%+0.5rem)] hidden w-[min(60vw,320px)] rounded-[24px] border border-slate-200 bg-white p-2 shadow-xl max-lg:block",
             isMobileMenuOpen
               ? "pointer-events-auto visible translate-y-0 opacity-100"
               : "pointer-events-none invisible -translate-y-2 opacity-0",
