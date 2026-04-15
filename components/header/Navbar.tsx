@@ -32,7 +32,7 @@ type UserMenuItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/products", matchPath: "/products", label: "San pham" },
-  { href: "/oder", matchPath: "/oder", label: "Don hang" },
+  { href: "/order", matchPath: "/order", label: "Don hang" },
   { href: "/chat", matchPath: "/chat", label: "Chat" },
 ]
 

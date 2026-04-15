@@ -27,7 +27,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   // xử lý call api add cart
   async function handleAddCartRequest(productID: number) {
     const addcartRequest: AddCartRequest = {
-      productId: productID
+      productId: productID,
+      quantity:1
     }
     return await addCart(addcartRequest).unwrap()
   }

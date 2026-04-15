@@ -1,19 +1,24 @@
+"use client"
+
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 type ProductDetailGalleryProps = {
   images: string[]
 }
 
 export default function ProductDetailGallery({
-  images
+  images,
 }: ProductDetailGalleryProps) {
   const [activeImage, setActiveImage] = useState(0)
+
   const currentImage = images[activeImage] ?? images[0]
-  // check xem có nhiều hơn 1 ảnh hay k 
+
+  // check xem co nhieu hon 1 anh hay khong
   const hasMultipleImages = images.length > 1
 
   // lui anh
@@ -40,7 +45,7 @@ export default function ProductDetailGallery({
             Product view
           </div>
 
-          {hasMultipleImages ? (
+          {hasMultipleImages && (
             <>
               <button
                 type="button"
@@ -64,10 +69,11 @@ export default function ProductDetailGallery({
                 <ChevronRight className="size-5" />
               </button>
             </>
-          ) : null}
+          )}
 
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
+            width={400}
+            height={400}
             alt=""
             className="aspect-4/4.5 w-full object-cover sm:aspect-[4/3.9]"
             src={currentImage}
@@ -89,8 +95,9 @@ export default function ProductDetailGallery({
               )}
               aria-label={`View image ${index + 1}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
+                width={400}
+                height={400}
                 alt=""
                 className="aspect-square w-full object-cover"
                 src={image}

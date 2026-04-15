@@ -144,7 +144,7 @@ export default function ProductDetailPurchaseCard({
           {/* mua ngay */}
           <MainButton
             className={cn(
-              "bg-white text-slate-950 hover:bg-slate-100",
+              "bg-white text-slate-950 hover:bg-slate-100 cursor-pointer",
               status === "INACTIVE" && "opacity-50 pointer-events-none"
             )}
             fullWidth
@@ -158,7 +158,7 @@ export default function ProductDetailPurchaseCard({
           <MainButton
             onClick={handleAddCart}
             className={cn(
-              "border-white/20 text-white hover:bg-white/10",
+              "border-white/20 text-white hover:bg-white/10 cursor-pointer",
               status === "INACTIVE" && "opacity-50 pointer-events-none"
             )}
             fullWidth
