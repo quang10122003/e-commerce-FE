@@ -20,9 +20,11 @@ export default function Providers({ children }: ProvidersProps) {
       <NotificationProvider>
         <SessionBootstrap />
         <AuthModals />
-        <Navbar />
-        {children}
-        <Footer />
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </div>
         <CartSidebar />
       </NotificationProvider>
       <TailwindIndicator />

@@ -8,14 +8,14 @@ export default function TopSellingProducts() {
   const products = data?.data ?? []
 
   return (
-    <section className="space-y-6 border-t border-slate-200 pt-10">
-      <div className="space-y-2 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-600">
-          Best seller
+    <section className="space-y-5">
+      <div className="space-y-2">
+        <p className="section-kicker">Best seller</p>
+        <h2 className="section-title">Top sản phẩm bán chạy</h2>
+        <p className="section-copy max-w-2xl">
+          Danh sách được trình bày với mật độ gọn vừa đủ, ưu tiên ảnh, tên và giá theo đúng thứ
+          tự chú ý.
         </p>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-          Top sản phẩm bán chạy
-        </h2>
       </div>
 
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]">

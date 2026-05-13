@@ -11,24 +11,24 @@ export default function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link
       href={`/products?categoryId=${category.id}`}
-      className="group flex shrink-0 flex-col items-center gap-3 text-center text-slate-900"
+      className="group flex w-[160px] shrink-0 flex-col gap-3 text-left text-slate-900 sm:w-[176px]"
     >
       <div
         className={cn(
-          "size-24 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-orange-300 group-hover:shadow-lg",
-          "sm:size-32 md:size-36"
+          "overflow-hidden rounded-[16px] border border-border bg-slate-50 transition-colors duration-200 group-hover:border-[#bfd2f6] group-hover:bg-primary-soft"
         )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={category.image}
           alt={category.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="aspect-[4/3] h-full w-full object-cover"
         />
       </div>
-      <p className="max-w-28 text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-950 sm:max-w-32">
-        {category.name}
-      </p>
+      <div className="space-y-1 px-1">
+        <p className="line-clamp-2 text-sm font-semibold text-slate-900">{category.name}</p>
+        <p className="text-xs font-medium text-slate-500">Xem sản phẩm</p>
+      </div>
     </Link>
   )
 }

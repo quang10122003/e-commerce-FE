@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
@@ -13,10 +13,7 @@ import { clearAuthenticatedUser } from "@/features/auth/authSlice"
 import { openLogin } from "@/features/auth/loginSlice"
 import { pushPendingRedirectUrl } from "@/features/auth/privateApi"
 import { useGetCartQuery, useLazyGetCartQuery } from "@/features/auth/tokenApi"
-import {
-  closeCartSidebar,
-  openCartSidebar,
-} from "@/features/cart/cartSidebarSlice"
+import { closeCartSidebar, openCartSidebar } from "@/features/cart/cartSidebarSlice"
 import { cn } from "@/lib/utils"
 import { useNotification } from "../ui/NotificationProvider"
 
@@ -32,15 +29,14 @@ type UserMenuItem = {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/products", matchPath: "/products", label: "San pham" },
-  { href: "/order", matchPath: "/order", label: "Don hang" },
-  { href: "/chat", matchPath: "/chat", label: "Chat" },
+  { href: "/products", matchPath: "/products", label: "Sản phẩm" },
+  { href: "/order", matchPath: "/order", label: "Đơn hàng" },
 ]
 
 const USER_MENU_ITEMS: UserMenuItem[] = [
-  { action: "profile", label: "Thong tin user" },
-  { action: "settings", label: "Cai dat" },
-  { action: "logout", label: "Dang xuat" },
+  { action: "profile", label: "Thông tin tài khoản" },
+  { action: "settings", label: "Cài đặt" },
+  { action: "logout", label: "Đăng xuất" },
 ]
 
 function getUserDisplayInfo(fullName?: string, email?: string) {
@@ -57,27 +53,24 @@ export default function Navbar() {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const pathname = usePathname()
-  const HIDDEN_SEARCH_ROUTES: string[] = ["/", "/products/"]
+  const hiddenSearchRoutes: string[] = ["/", "/products/"]
 
-  const showSearch = !HIDDEN_SEARCH_ROUTES.some((route) => {
+  const showSearch = !hiddenSearchRoutes.some((route) => {
     if (route.endsWith("/") && route.length > 1) {
       return pathname.startsWith(route)
     }
+
     return pathname === route
   })
 
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
   const isCartSidebarOpen = useAppSelector((state) => state.cartSidebar.isOpen)
-
-  // Lấy số lượng realtime từ RTK Query, chỉ fetch khi đã đăng nhập
   const { data: cartData } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
   })
   const cartTotalQuantity = cartData?.data?.totalQuantity ?? 0
 
-  // Lazy query chỉ dùng để fetch chi tiết khi mở sidebar
   const [requestCart, { isFetching: isCartSidebarLoading }] = useLazyGetCartQuery()
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false)
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false)
@@ -85,41 +78,45 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userDisplay = getUserDisplayInfo(currentUser?.fullName, currentUser?.email)
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!userMenuRef.current?.contains(event.target as Node)) {
-        setIsDesktopUserMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  useEffect(() => {
-    if (!isCartSidebarOpen) return
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") dispatch(closeCartSidebar())
-    }
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    document.addEventListener("keydown", handleKeyDown)
-    return () => {
-      document.body.style.overflow = originalOverflow
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [isCartSidebarOpen, dispatch])
-
   const closeAllMenus = useCallback(() => {
     setIsDesktopUserMenuOpen(false)
     setIsMobileMenuOpen(false)
     setIsMobileUserMenuOpen(false)
   }, [])
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setIsDesktopUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (!isCartSidebarOpen) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") dispatch(closeCartSidebar())
+    }
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    document.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isCartSidebarOpen, dispatch])
+
   function handleLogout() {
     clearAuthenticatedUser(dispatch)
     closeAllMenus()
     dispatch(closeCartSidebar())
-    showNotification("dang xuat thanh cong", { variant: "success" })
+    showNotification("Đăng xuất thành công", { variant: "success" })
   }
 
   function handleUserMenuAction(action: UserMenuItem["action"]) {
@@ -127,6 +124,7 @@ export default function Navbar() {
       handleLogout()
       return
     }
+
     setIsDesktopUserMenuOpen(false)
     setIsMobileUserMenuOpen(false)
   }
@@ -149,15 +147,19 @@ export default function Navbar() {
       dispatch(closeCartSidebar())
       return
     }
+
     if (!isAuthenticated) {
       handleOpenLogin()
       return
     }
+
     if (typeof window !== "undefined" && window.innerWidth <= 750) {
       router.push("/cart")
       return
     }
+
     closeAllMenus()
+
     try {
       await requestCart().unwrap()
       dispatch(openCartSidebar())
@@ -167,161 +169,165 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-background/90 backdrop-blur-xl">
-      <Container className="relative flex items-center gap-3 py-3 max-[750px]:gap-2 max-[750px]:py-2">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background/95">
+      <Container className="relative py-4">
+        <div className="surface-primary flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
+          <Link className="min-w-0 shrink-0" href="/">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex size-11 items-center justify-center rounded-[12px] bg-primary text-base font-bold text-white">
+                M
+              </span>
+              <div className="min-w-0">
+                <p className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">
+                  MyShop
+                </p>
+                <p className="text-xs font-medium text-slate-500">Mua sắm tinh gọn mỗi ngày</p>
+              </div>
+            </div>
+          </Link>
 
-        {/* Logo */}
-        <Link className="shrink-0" href="/">
-          <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            My shop
-          </h1>
-        </Link>
-
-        {/* Nav desktop */}
-        <div className="hidden flex-1 lg:block">
-          <ul className="flex items-center gap-6">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.label}>
-                <Link
-                  aria-current={pathname === item.matchPath ? "page" : undefined}
-                  className={cn(
-                    "text-sm font-medium text-slate-600 transition hover:text-slate-950",
-                    pathname === item.matchPath && "font-semibold text-sky-700"
-                  )}
-                  href={item.href}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Nhom phai: search + user + gio hang + hamburger */}
-        <div className="flex flex-1 items-center justify-end gap-3 min-[751px]:min-w-55">
-
-          {/* Thanh tim kiem */}
-          <div className="relative flex-1 max-w-xl max-[750px]:max-w-none">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              className={cn("h-11 rounded-full border-slate-200 bg-slate-50 pl-11 pr-4 max-[750px]:h-10",
-                !showSearch && "pointer-events-none bg-[#f0f0f0] opacity-70"
-              )}
-              placeholder="Tim kiem san pham..."
-              type="text"
-            />
+          <div className="hidden flex-1 items-center justify-center lg:flex">
+            <ul className="flex items-center gap-2">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    aria-current={pathname === item.matchPath ? "page" : undefined}
+                    className={cn(
+                      "inline-flex rounded-[12px] px-4 py-2 text-sm font-medium text-slate-600 hover:bg-primary-soft hover:text-primary",
+                      pathname === item.matchPath && "bg-primary-soft text-primary"
+                    )}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* User menu desktop */}
-          {!isCheckingAuth && isAuthenticated ? (
-            <div className="relative hidden lg:block" ref={userMenuRef}>
-              <button
-                className="inline-flex min-w-0 items-center gap-3 rounded-full border border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-2 py-1.5 text-left shadow-sm transition hover:border-sky-200"
-                onClick={() => setIsDesktopUserMenuOpen((prev) => !prev)}
-                type="button"
-              >
-                <span className="inline-flex size-9 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-sm font-bold text-white">
-                  {userDisplay.avatar}
-                </span>
-                <span className="grid min-w-0">
-                  <span className="truncate text-sm font-semibold text-slate-900">
-                    {userDisplay.fullName}
-                  </span>
-                  <span className="truncate text-xs text-slate-500">{userDisplay.email}</span>
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "size-4 shrink-0 text-slate-500 transition-transform",
-                    isDesktopUserMenuOpen && "rotate-180"
-                  )}
-                />
-              </button>
+          <div className="order-3 flex w-full items-center gap-3 sm:order-none sm:flex-1 lg:w-auto lg:max-w-xl">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                className={cn(
+                  "pl-11",
+                  !showSearch && "pointer-events-none bg-slate-100 text-slate-400 opacity-70"
+                )}
+                placeholder="Tìm kiếm sản phẩm..."
+                type="text"
+              />
+            </div>
 
-              {isDesktopUserMenuOpen ? (
-                <div className="absolute right-0 top-[calc(100%+0.75rem)] w-72 rounded-[24px] border border-sky-100 bg-white p-3 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)]">
-                  <div className="flex items-center gap-3 border-b border-slate-100 px-2 pb-3">
-                    <span className="inline-flex size-11 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-base font-bold text-white">
-                      {userDisplay.avatar}
+            <button
+              aria-busy={isCartSidebarLoading}
+              aria-controls="cart-preview-dialog"
+              aria-expanded={isCartSidebarOpen}
+              aria-haspopup="dialog"
+              className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-[12px] border border-border bg-white text-slate-700 transition-colors hover:bg-primary-soft hover:text-primary"
+              disabled={isCartSidebarLoading}
+              onClick={handleToggleCartSidebar}
+              type="button"
+            >
+              {cartTotalQuantity > 0 ? (
+                <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
+                  {cartTotalQuantity}
+                </span>
+              ) : null}
+              <ShoppingCart className="size-5" />
+            </button>
+
+            {!isCheckingAuth && isAuthenticated ? (
+              <div className="relative hidden lg:block" ref={userMenuRef}>
+                <button
+                  className="inline-flex min-w-0 items-center gap-3 rounded-[12px] border border-border bg-white px-3 py-2 text-left hover:bg-primary-soft"
+                  onClick={() => setIsDesktopUserMenuOpen((prev) => !prev)}
+                  type="button"
+                >
+                  <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                    {userDisplay.avatar}
+                  </span>
+                  <span className="grid min-w-0">
+                    <span className="truncate text-sm font-semibold text-slate-900">
+                      {userDisplay.fullName}
                     </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-slate-900">{userDisplay.fullName}</p>
-                      <p className="truncate text-sm text-slate-500">{userDisplay.email}</p>
+                    <span className="truncate text-xs text-slate-500">{userDisplay.email}</span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "size-4 shrink-0 text-slate-400 transition-transform",
+                      isDesktopUserMenuOpen && "rotate-180 text-primary"
+                    )}
+                  />
+                </button>
+
+                {isDesktopUserMenuOpen ? (
+                  <div className="surface-overlay absolute right-0 top-[calc(100%+0.75rem)] w-72 p-3">
+                    <div className="surface-secondary flex items-center gap-3 p-4">
+                      <span className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-base font-bold text-white">
+                        {userDisplay.avatar}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {userDisplay.fullName}
+                        </p>
+                        <p className="truncate text-sm text-slate-500">{userDisplay.email}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-1">
+                      {USER_MENU_ITEMS.map((item) => (
+                        <button
+                          key={item.action}
+                          className="rounded-[12px] px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-primary-soft hover:text-primary"
+                          onClick={() => handleUserMenuAction(item.action)}
+                          type="button"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div className="mt-2 grid gap-1">
-                    {USER_MENU_ITEMS.map((item) => (
-                      <button
-                        key={item.action}
-                        className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-sky-50 hover:text-sky-700"
-                        onClick={() => handleUserMenuAction(item.action)}
-                        type="button"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <MainButton
-              className="hidden lg:inline-flex"
-              onClick={handleOpenLogin}
-              text="Dang nhap"
+                ) : null}
+              </div>
+            ) : (
+              <MainButton
+                className="hidden lg:inline-flex"
+                onClick={handleOpenLogin}
+                type="button"
+                variant="secondary"
+              >
+                Đăng nhập
+              </MainButton>
+            )}
+
+            <button
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Mở menu"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-[12px] border border-border bg-white text-slate-700 lg:hidden"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               type="button"
-              variant="secondary"
-            />
-          )}
-
-          {/* Nut gio hang */}
-          <button
-            aria-busy={isCartSidebarLoading}
-            aria-controls="cart-preview-dialog"
-            aria-expanded={isCartSidebarOpen}
-            aria-haspopup="dialog"
-            className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950 max-[750px]:size-10"
-            disabled={isCartSidebarLoading}
-            onClick={handleToggleCartSidebar}
-            type="button"
-          >
-            {cartTotalQuantity > 0 ? (
-              <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-sky-100 px-1.5 text-[11px] font-bold text-sky-700">
-                {cartTotalQuantity}
-              </span>
-            ) : null}
-            <ShoppingCart className="size-5" />
-          </button>
-
-          {/* Nut hamburger */}
-          <button
-            aria-expanded={isMobileMenuOpen}
-            aria-label="Mo menu"
-            className="hidden size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm max-lg:inline-flex"
-            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-            type="button"
-          >
-            {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+            >
+              {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </div>
 
-        {/* Menu mobile dropdown */}
         <div
           className={cn(
-            "absolute right-4 top-[calc(100%+0.5rem)] hidden w-[min(60vw,320px)] rounded-[24px] border border-slate-200 bg-white p-2 shadow-xl max-lg:block",
+            "surface-overlay absolute right-4 top-[calc(100%+0.75rem)] z-20 w-[min(84vw,340px)] p-3 lg:hidden",
             isMobileMenuOpen
               ? "pointer-events-auto visible translate-y-0 opacity-100"
               : "pointer-events-none invisible -translate-y-2 opacity-0",
             "transition-all duration-200"
           )}
         >
-          <ul className="space-y-1">
+          <ul className="grid gap-1">
             {NAV_ITEMS.map((item) => (
               <li key={`mobile-${item.label}`}>
                 <Link
                   aria-current={pathname === item.matchPath ? "page" : undefined}
                   className={cn(
-                    "block rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-950",
-                    pathname === item.matchPath && "bg-sky-50 text-sky-700"
+                    "block rounded-[12px] px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-primary-soft hover:text-primary",
+                    pathname === item.matchPath && "bg-primary-soft text-primary"
                   )}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -331,15 +337,15 @@ export default function Navbar() {
               </li>
             ))}
 
-            <li className="border-t border-slate-100 pt-2">
+            <li className="mt-2 border-t border-border pt-3">
               {!isCheckingAuth && isAuthenticated ? (
                 <>
                   <button
-                    className="flex w-full items-center gap-3 rounded-[20px] border border-sky-100 bg-[linear-gradient(180deg,#f8fbff_0%,#eff6ff_100%)] px-4 py-3 text-left"
+                    className="surface-secondary flex w-full items-center gap-3 p-4 text-left"
                     onClick={() => setIsMobileUserMenuOpen((prev) => !prev)}
                     type="button"
                   >
-                    <span className="inline-flex size-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-sm font-bold text-white">
+                    <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
                       {userDisplay.avatar}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -350,8 +356,8 @@ export default function Navbar() {
                     </div>
                     <ChevronDown
                       className={cn(
-                        "size-4 text-slate-500 transition-transform",
-                        isMobileUserMenuOpen && "rotate-180"
+                        "size-4 text-slate-400 transition-transform",
+                        isMobileUserMenuOpen && "rotate-180 text-primary"
                       )}
                     />
                   </button>
@@ -361,7 +367,7 @@ export default function Navbar() {
                       {USER_MENU_ITEMS.map((item) => (
                         <button
                           key={item.action}
-                          className="rounded-2xl bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-sky-50 hover:text-sky-700"
+                          className="rounded-[12px] px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-primary-soft hover:text-primary"
                           onClick={() => handleUserMenuAction(item.action)}
                           type="button"
                         >
@@ -373,7 +379,6 @@ export default function Navbar() {
                 </>
               ) : (
                 <MainButton
-                  className="w-full"
                   fullWidth
                   onClick={() => {
                     handleOpenLogin()
@@ -382,13 +387,12 @@ export default function Navbar() {
                   type="button"
                   variant="secondary"
                 >
-                  Dang nhap
+                  Đăng nhập
                 </MainButton>
               )}
             </li>
           </ul>
         </div>
-
       </Container>
     </nav>
   )

@@ -73,17 +73,19 @@ export default function CategoryList() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-          Danh mục sản phẩm
-        </h2>
+    <section className="space-y-5">
+      <div className="space-y-2">
+        <p className="section-kicker">Danh mục</p>
+        <h2 className="section-title">Danh mục sản phẩm</h2>
+        <p className="section-copy max-w-2xl">
+          Các nhóm sản phẩm được gom gọn trong những surface sáng, nhẹ và dễ quét nhanh.
+        </p>
       </div>
 
       <div
         ref={scrollContainerRef}
         className={cn(
-          "flex gap-4 overflow-x-auto rounded-[10px] border border-orange-100 bg-[linear-gradient(180deg,#fff7f3_0%,#fffdfb_100%)] px-3 py-5 select-none sm:gap-6 sm:px-5",
+          "surface-primary flex gap-4 overflow-x-auto px-4 py-5 select-none sm:gap-5 sm:px-5",
           "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           isDragging ? "cursor-grabbing" : "cursor-grab"
         )}

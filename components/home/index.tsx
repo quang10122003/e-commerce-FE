@@ -5,12 +5,12 @@ import Container from "@/components/shared/Container"
 
 export default function HomeSections() {
   return (
-    <>
+    <Container className="space-y-6 py-6 sm:space-y-8 sm:py-8 lg:space-y-10 lg:py-10">
       <HeroSection />
-      <Container className="space-y-14 py-12 sm:space-y-16 sm:py-16">
+      <div className="space-y-6 sm:space-y-8 lg:space-y-10">
         <CategoryList />
         <TopSellingProducts />
-      </Container>
-    </>
+      </div>
+    </Container>
   )
 }

@@ -1,58 +1,44 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { ProductType } from "@/types/product/ProductsummerType"
-import Link from "next/link"
-import MainButton from "../ui/main-button"
 import Image from "next/image"
+import Link from "next/link"
+
+import { Card, CardContent } from "@/components/ui/card"
+import MainButton from "@/components/ui/main-button"
 import { useAddCartMutation } from "@/features/auth/tokenApi"
+import { extractErrorMessage } from "@/lib/error"
+import { formatCurrency } from "@/lib/format"
+import { ProductType } from "@/types/product/ProductsummerType"
 import AddCartRequest from "@/types/cart/AddCartRequest"
 import { useNotification } from "../ui/NotificationProvider"
-import { extractErrorMessage } from "@/lib/error"
 
 type ProductCardProps = {
   product: ProductType
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { showNotification } = useNotification()
   const [addCart] = useAddCartMutation()
 
-  // xử lý call api add cart
-  async function handleAddCartRequest(productID: number) {
+  async function handleAddCartRequest(productId: number) {
     const addcartRequest: AddCartRequest = {
-      productId: productID,
-      quantity:1
+      productId,
+      quantity: 1,
     }
     return await addCart(addcartRequest).unwrap()
   }
 
-  // xử lý repone và thông báo cho add cart
-  async function handldeAddCart(
-    productID: number,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) {
+  async function handleAddCart(productId: number, event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
     event.stopPropagation()
 
     try {
-      await handleAddCartRequest(productID)
-
+      await handleAddCartRequest(productId)
       showNotification("Thêm sản phẩm vào giỏ hàng thành công", {
-        variant: "success"
+        variant: "success",
       })
-
     } catch (error) {
       const errMsg = extractErrorMessage(error)
-
       showNotification(errMsg, {
-        variant: "error"
+        variant: "error",
       })
     }
   }
@@ -60,7 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const descriptionText = product.description ?? "Mô tả đang được cập nhật."
 
   return (
-    <Link href={`products/${product.id}`}>
+    <Link href={`/products/${product.id}`}>
       <Card className="group flex min-h-107 flex-col overflow-hidden rounded-[10px] border-slate-200/80 transition-transform duration-300 hover:-translate-y-1 sm:min-h-0">
         <div className="aspect-[4/4.8] overflow-hidden bg-slate-100 sm:aspect-4/3">
           <Image
@@ -73,32 +59,58 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         </div>
 
-        <CardContent className="grid flex-1 gap-3 p-5">
+        <CardContent className="flex flex-1 flex-col gap-3 p-5">
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Đang mở bán
+            </span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Còn {product.stock}
+            </span>
+          </div>
+
           <h2 className="line-clamp-2 text-lg font-bold leading-7 text-slate-950">
             {product.name}
           </h2>
-          <p className="line-clamp-2 min-h-12 text-sm leading-6 text-slate-500 ">{descriptionText}</p>
-          <p className="text-base font-bold text-sky-700">{formatCurrency(product.price)}</p>
-          <div className="flex gap-2 mt-auto flex-wrap py-2.5">
-            <MainButton
-              onClick={(event) => handldeAddCart(product.id, event)}
-              size={"small"}
-              type="button"
-              className="flex-1 rounded-2xl border border-sky-600 py-6 px-3 md:py-4 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 bg-white cursor-pointer"
-            >
-              Thêm giỏ hàng
-            </MainButton>
-            <MainButton
-              size={"small"}
-              type="button"
-              className="flex-1 rounded-2xl bg-sky-600 py-6 px-3 md:py-4 text-sm font-semibold text-white transition hover:bg-sky-700 cursor-pointer"
-            >
-              Mua ngay
-            </MainButton>
+          <p className="line-clamp-2 min-h-12 text-sm leading-6 text-slate-500">
+            {descriptionText}
+          </p>
+
+          {/* Đẩy phần giá + nút xuống đáy */}
+          <div className="mt-auto flex flex-col gap-3">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                  Giá bán
+                </p>
+                <p className="mt-1 text-base font-bold text-sky-700">
+                  {formatCurrency(product.price)}
+                </p>
+              </div>
+              <p className="text-sm font-medium text-slate-500">{product.purchases} lượt mua</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <MainButton
+                onClick={(event) => handleAddCart(product.id, event)}
+                size="small"
+                type="button"
+                className="flex-1 rounded-2xl border border-sky-600 px-3 py-4 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 bg-white cursor-pointer"
+              >
+                Thêm giỏ hàng
+              </MainButton>
+              <MainButton
+                size="small"
+                type="button"
+                className="flex-1 rounded-2xl bg-sky-600 px-3 py-4 text-sm font-semibold text-white transition hover:bg-sky-700 cursor-pointer"
+              >
+                Mua ngay
+              </MainButton>
+            </div>
           </div>
         </CardContent>
       </Card>
     </Link>
-
   )
 }

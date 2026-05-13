@@ -7,37 +7,33 @@ type ProductDetailOverviewProps = {
   product: ProductDetail
 }
 
-// text co dinh
 const fixedFeatures = [
-  "Upper mesh thoang khi, giu form tot cho nhung ngay di chuyen nhieu.",
-  "De giay dem hoi giup cam giac em chan va on dinh hon khi mang ca ngay.",
-  "Tong the mau sac trung tinh, de ket hop voi jeans, kaki hoac do the thao.",
-  "Thiet ke hien dai nhung van de ung dung, hop voi nguoi tre va phong cach thanh thi.",
+  "Chất liệu và hoàn thiện được tối ưu cho nhu cầu sử dụng hằng ngày.",
+  "Tổng thể thiết kế gọn gàng, dễ phối và phù hợp nhiều bối cảnh sử dụng.",
+  "Thông tin sản phẩm hiển thị rõ ràng, dễ quét và ít chi tiết gây nhiễu.",
+  "Cấu trúc nội dung ưu tiên những gì người mua cần thấy đầu tiên.",
 ]
 
 export default function ProductDetailOverview({ product }: ProductDetailOverviewProps) {
   return (
-    <Card className="rounded-[28px] border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-      <CardContent className="space-y-6 p-6 sm:p-8">
+    <Card>
+      <CardContent className="space-y-6 p-6 sm:p-7">
         <div className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-600">
-            Overview
-          </p>
+          <p className="section-kicker">Overview</p>
           <h2 className="text-2xl font-bold tracking-tight text-slate-950">
-            Thong tin noi bat cua san pham
+            Thông tin nổi bật của sản phẩm
           </h2>
         </div>
 
-        <p className="text-base leading-8 text-slate-600">{product.description}</p>
+        <p className="text-[15px] leading-8 text-slate-600">{product.description}</p>
 
-        {/* list mo ta */}
         <div className="grid gap-3">
           {fixedFeatures.map((feature) => (
             <div
               key={feature}
-              className="flex gap-3 rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-4"
+              className="surface-secondary flex gap-3 p-4"
             >
-              <div className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+              <div className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-white text-primary">
                 <Sparkles className="size-4.5" />
               </div>
               <p className="text-sm leading-7 text-slate-600">{feature}</p>

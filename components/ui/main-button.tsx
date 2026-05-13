@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils"
 
 const mainButtonVariants = cva(
   [
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium",
-    "transition-all duration-200 outline-none",
-    "focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[12px] border text-sm font-semibold",
+    "transition-colors duration-150 outline-none",
+    "focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring focus-visible:ring-offset-0",
     "focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:opacity-60",
   ],
@@ -17,16 +17,18 @@ const mainButtonVariants = cva(
     variants: {
       size: {
         small: "h-9 px-4 text-sm",
-        medium: "h-11 px-6 text-base",
-        large: "h-12 px-7 text-base sm:px-8 sm:text-lg",
+        medium: "h-11 px-5 text-sm",
+        large: "h-12 px-6 text-[15px]",
       },
       variant: {
-        primary: "bg-slate-950 text-white shadow-sm hover:bg-slate-800",
+        primary:
+          "border-transparent bg-primary text-primary-foreground hover:brightness-[1.03] active:brightness-[0.98]",
         secondary:
-          "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50",
-        outline:
-          "border border-slate-300 bg-transparent text-slate-900 hover:border-slate-400 hover:bg-slate-50",
-        ghost: "bg-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-950",
+          "border-border bg-white text-slate-700 shadow-none hover:border-[#bfd2f6] hover:bg-primary-soft hover:text-primary",
+        outline: "border-border bg-transparent text-slate-700 hover:bg-white hover:text-slate-950",
+        ghost: "border-transparent bg-transparent text-slate-600 hover:bg-primary-soft hover:text-primary",
+        dangerSoft:
+          "border-[#f3c9c9] bg-danger-soft text-[#b42318] hover:border-[#efb4b4] hover:bg-[#ffe0e0]",
       },
       fullWidth: {
         true: "w-full",

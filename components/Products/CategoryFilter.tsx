@@ -1,14 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { ChevronDown } from "lucide-react"
 
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useGetCategoriesQuery } from "@/features/category/categoryApi"
 import { cn } from "@/lib/utils"
 import { Category } from "@/types/category/Category"
-
-const ALL_CATEGORY_VALUE = "all"
 
 type CategoryFilterProps = {
   onSelectCategory: (categoryId?: number) => void
@@ -39,100 +36,90 @@ export default function CategoryFilter({
     }
   }, [])
 
-  function handleChangeCategory(value: string) {
-    onSelectCategory(value === ALL_CATEGORY_VALUE ? undefined : Number(value))
-  }
-
-  function handleSelectFromDropdown(categoryId?: number) {
-    onSelectCategory(categoryId)
+  function handleChangeCategory(value?: number) {
+    onSelectCategory(value)
     setIsDropdownOpen(false)
   }
 
   if (isLoading) {
-    return (
-      <div className="rounded-[28px] border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm">
-        Đang tải danh mục...
-      </div>
-    )
+    return <div className="surface-primary p-5 text-sm text-slate-500">Đang tải danh mục...</div>
   }
 
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.35)]">
-      <h2 className="mb-4 text-lg font-semibold text-slate-950">Danh mục sản phẩm</h2>
-
-      <div className="hidden lg:block">
-        <RadioGroup
-          className="max-h-[70vh] gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]"
-          value={selectedCategoryId === undefined ? ALL_CATEGORY_VALUE : String(selectedCategoryId)}
-          onValueChange={handleChangeCategory}
-        >
-          <Label
-            htmlFor="radio-all"
-            className={cn(
-              "min-h-12 cursor-pointer rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-lg",
-              selectedCategoryId === undefined &&
-                "border-sky-200 bg-[linear-gradient(180deg,#eff6ff_0%,#dbeafe_100%)] text-sky-900 shadow-md"
-            )}
-          >
-            <RadioGroupItem value={ALL_CATEGORY_VALUE} id="radio-all" className="mt-0.5" />
-            <span className="flex-1">Tất cả</span>
-          </Label>
-
-          {categories.map((category) => (
-            <Label
-              key={category.id}
-              htmlFor={`radio-${category.id}`}
-              className={cn(
-                "min-h-12 cursor-pointer rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-lg",
-                selectedCategoryId === category.id &&
-                  "border-sky-200 bg-[linear-gradient(180deg,#eff6ff_0%,#dbeafe_100%)] text-sky-900 shadow-md"
-              )}
-            >
-              <RadioGroupItem
-                value={String(category.id)}
-                id={`radio-${category.id}`}
-                className="mt-0.5"
-              />
-              <span className="flex-1 leading-6">{category.name}</span>
-            </Label>
-          ))}
-        </RadioGroup>
+    <div className="surface-primary p-5">
+      <div className="space-y-2">
+        <p className="section-kicker">Bộ lọc</p>
+        <h2 className="text-[18px] font-semibold text-slate-950">Danh mục sản phẩm</h2>
+        <p className="text-sm leading-6 text-slate-600">
+          Chọn nhóm sản phẩm để danh sách hiển thị gọn hơn.
+        </p>
       </div>
 
-      <div className="grid gap-2 lg:hidden">
-        <label className="text-sm font-medium text-slate-600">Chọn danh mục</label>
+      <div className="mt-5 hidden lg:grid lg:gap-2">
+        <button
+          className={cn(
+            "rounded-[12px] border px-4 py-3 text-left text-sm font-medium transition-colors",
+            selectedCategoryId === undefined
+              ? "border-[#bfd2f6] bg-primary-soft text-primary"
+              : "border-border bg-white text-slate-700 hover:bg-primary-soft hover:text-primary"
+          )}
+          onClick={() => handleChangeCategory(undefined)}
+          type="button"
+        >
+          Tất cả
+        </button>
+
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            className={cn(
+              "rounded-[12px] border px-4 py-3 text-left text-sm font-medium transition-colors",
+              selectedCategoryId === category.id
+                ? "border-[#bfd2f6] bg-primary-soft text-primary"
+                : "border-border bg-white text-slate-700 hover:bg-primary-soft hover:text-primary"
+            )}
+            onClick={() => handleChangeCategory(category.id)}
+            type="button"
+          >
+            {category.name}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 lg:hidden">
+        <label className="mb-2 block text-sm font-medium text-slate-600">Chọn danh mục</label>
         <div ref={dropdownRef} className="relative">
           <button
             type="button"
-            className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-900"
+            className="flex min-h-11 w-full items-center justify-between rounded-[12px] border border-border bg-white px-4 py-3 text-left text-sm font-medium text-slate-900"
             aria-expanded={isDropdownOpen}
             aria-haspopup="listbox"
             onClick={() => setIsDropdownOpen((previousValue) => !previousValue)}
           >
             <span className="truncate">{selectedCategory?.name ?? "Tất cả"}</span>
-            <span
+            <ChevronDown
               className={cn(
-                "ml-3 size-2.5 shrink-0 rotate-45 border-b-2 border-r-2 border-slate-400 transition-transform",
-                isDropdownOpen && "-rotate-135"
+                "ml-3 size-4 shrink-0 text-slate-400 transition-transform",
+                isDropdownOpen && "rotate-180 text-primary"
               )}
             />
           </button>
 
           {isDropdownOpen ? (
             <ul
-              className="absolute inset-x-0 top-[calc(100%+0.375rem)] z-20 max-h-[70vh] overflow-y-auto rounded-[20px] border border-slate-200 bg-white p-2 shadow-xl"
+              className="surface-overlay absolute inset-x-0 top-[calc(100%+0.375rem)] z-20 max-h-[70vh] overflow-y-auto p-2"
               role="listbox"
             >
               <li>
                 <button
                   type="button"
                   className={cn(
-                    "w-full rounded-2xl px-3 py-2.5 text-left text-sm transition hover:bg-sky-50 hover:text-sky-700",
+                    "w-full rounded-[12px] px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary-soft hover:text-primary",
                     selectedCategoryId === undefined
-                      ? "bg-sky-50 font-medium text-sky-700"
+                      ? "bg-primary-soft font-medium text-primary"
                       : "text-slate-700"
                   )}
-                  onClick={() => handleSelectFromDropdown(undefined)}
+                  onClick={() => handleChangeCategory(undefined)}
                 >
                   Tất cả
                 </button>
@@ -143,12 +130,12 @@ export default function CategoryFilter({
                   <button
                     type="button"
                     className={cn(
-                      "w-full rounded-2xl px-3 py-2.5 text-left text-sm transition hover:bg-sky-50 hover:text-sky-700",
+                      "w-full rounded-[12px] px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary-soft hover:text-primary",
                       selectedCategoryId === category.id
-                        ? "bg-sky-50 font-medium text-sky-700"
+                        ? "bg-primary-soft font-medium text-primary"
                         : "text-slate-700"
                     )}
-                    onClick={() => handleSelectFromDropdown(category.id)}
+                    onClick={() => handleChangeCategory(category.id)}
                   >
                     {category.name}
                   </button>

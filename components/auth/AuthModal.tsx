@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { RegisterOptions, useForm, useWatch } from "react-hook-form"
 
@@ -17,9 +18,9 @@ import {
   popPendingRedirectUrl,
 } from "@/features/auth/privateApi"
 import { tokenApi } from "@/features/auth/tokenApi"
+import { cn } from "@/lib/utils"
 import { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import { AuthResponse } from "@/types/Auth/AuthResponse"
-import { cn } from "@/lib/utils"
 
 type AuthMode = "login" | "register"
 
@@ -211,7 +212,7 @@ export default function AuthModal() {
         role: response.data.role,
       })
 
-      showNotification(isRegisterMode ? "Đăng ký thành công!" : "Đăng nhập thành công!", {
+      showNotification(isRegisterMode ? "Đăng ký thành công" : "Đăng nhập thành công", {
         variant: "success",
       })
 
@@ -246,17 +247,13 @@ export default function AuthModal() {
           id={name}
           type={type}
           placeholder={placeholder}
-          className={cn(
-            "h-12 rounded-2xl",
-            error &&
-              "border-rose-300 focus-visible:border-rose-400 focus-visible:ring-rose-100"
-          )}
+          className={cn(error && "border-[#efb4b4] focus-visible:border-[#dc2626] focus-visible:ring-[#fecaca]")}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
           {...register(name, getFieldRules(name))}
         />
         {error?.message ? (
-          <p id={errorId} className="text-sm leading-6 text-rose-600">
+          <p id={errorId} className="text-sm leading-6 text-[#b42318]">
             {error.message}
           </p>
         ) : null}
@@ -267,44 +264,50 @@ export default function AuthModal() {
   return (
     <div className="fixed inset-0 z-[200] flex items-start justify-center px-4 py-6 sm:items-center">
       <button
-        className="absolute inset-0 bg-slate-950/55"
+        className="absolute inset-0 bg-slate-950/18"
         onClick={handleCloseModal}
         type="button"
         aria-label="Đóng biểu mẫu xác thực"
       />
 
-      <div className="relative z-10 w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_30px_80px_-35px_rgba(15,23,42,0.4)] sm:p-8">
-        <div className="mb-6 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-500">
-            Welcome back
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-            {formCopy.title}
-          </h1>
+      <div className="surface-overlay relative z-10 w-full max-w-md p-6 sm:p-7">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <p className="section-kicker">Account</p>
+            <h1 className="text-[30px] font-bold tracking-[-0.03em] text-slate-950">
+              {formCopy.title}
+            </h1>
+            <p className="text-sm leading-7 text-slate-600">
+              Đăng nhập hoặc tạo tài khoản để tiếp tục trải nghiệm mua sắm.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleCloseModal}
+            className="inline-flex size-10 items-center justify-center rounded-[12px] border border-border bg-white text-slate-600 transition-colors hover:bg-primary-soft hover:text-primary"
+            aria-label="Đóng"
+          >
+            <X className="size-4" />
+          </button>
         </div>
 
         <form className="grid gap-4" onSubmit={handleSubmit(handleSubmitForm)} noValidate>
           {fields.map(renderField)}
 
           {errors.root?.message ? (
-            <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">
+            <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm leading-6 text-[#b42318]">
               {errors.root.message}
             </p>
           ) : null}
 
-          <MainButton
-            type="submit"
-            className="mt-1 h-12 rounded-2xl"
-            disabled={isSubmitting}
-            fullWidth
-          >
+          <MainButton type="submit" className="mt-1 h-12" disabled={isSubmitting} fullWidth>
             {formCopy.submitLabel}
           </MainButton>
 
           {!isRegisterMode ? (
             <button
               type="button"
-              className="justify-self-end text-sm text-slate-500 transition hover:text-slate-900"
+              className="justify-self-end text-sm font-medium text-slate-500 transition hover:text-primary"
             >
               Quên mật khẩu?
             </button>
@@ -314,7 +317,7 @@ export default function AuthModal() {
             <span>{formCopy.switchText}</span>
             <button
               type="button"
-              className="font-semibold text-rose-600 transition hover:text-rose-700"
+              className="font-semibold text-primary transition hover:brightness-110"
               onClick={() => resetFormState(isRegisterMode ? "login" : "register")}
             >
               {formCopy.switchActionLabel}

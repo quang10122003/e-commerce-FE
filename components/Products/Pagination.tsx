@@ -38,18 +38,18 @@ export default function Pagination({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
       <button
         type="button"
         onClick={() => handlePageChange(safeCurrentPage - 1)}
         disabled={isFirstPage}
         aria-label="Trang trước"
         className={cn(
-          "inline-flex size-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950",
-          isFirstPage && "cursor-not-allowed border-slate-100 text-slate-300 hover:border-slate-100 hover:text-slate-300"
+          "inline-flex size-10 items-center justify-center rounded-[12px] border border-border bg-white text-slate-600 transition-colors hover:bg-primary-soft hover:text-primary",
+          isFirstPage && "cursor-not-allowed opacity-50 hover:bg-white hover:text-slate-600"
         )}
       >
-        <ChevronLeft className="size-5" />
+        <ChevronLeft className="size-4.5" />
       </button>
 
       {visiblePages.map((page) => (
@@ -58,10 +58,10 @@ export default function Pagination({
           type="button"
           onClick={() => handlePageChange(page)}
           className={cn(
-            "inline-flex size-10 items-center justify-center rounded-2xl border text-sm font-semibold transition",
+            "inline-flex size-10 items-center justify-center rounded-[12px] border text-sm font-semibold transition-colors",
             page === safeCurrentPage
-              ? "border-sky-300 bg-sky-50 text-sky-700"
-              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-950"
+              ? "border-[#bfd2f6] bg-primary-soft text-primary"
+              : "border-border bg-white text-slate-600 hover:bg-primary-soft hover:text-primary"
           )}
           aria-current={page === safeCurrentPage ? "page" : undefined}
         >
@@ -70,7 +70,7 @@ export default function Pagination({
       ))}
 
       {groupEndPage < normalizedTotalPage ? (
-        <span className="text-lg font-medium text-slate-400" aria-hidden="true">
+        <span className="px-1 text-lg font-medium text-slate-400" aria-hidden="true">
           ...
         </span>
       ) : null}
@@ -81,11 +81,11 @@ export default function Pagination({
         disabled={isLastPage}
         aria-label="Trang sau"
         className={cn(
-          "inline-flex size-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950",
-          isLastPage && "cursor-not-allowed border-slate-100 text-slate-300 hover:border-slate-100 hover:text-slate-300"
+          "inline-flex size-10 items-center justify-center rounded-[12px] border border-border bg-white text-slate-600 transition-colors hover:bg-primary-soft hover:text-primary",
+          isLastPage && "cursor-not-allowed opacity-50 hover:bg-white hover:text-slate-600"
         )}
       >
-        <ChevronRight className="size-5" />
+        <ChevronRight className="size-4.5" />
       </button>
     </div>
   )

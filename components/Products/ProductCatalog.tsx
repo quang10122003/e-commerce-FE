@@ -70,59 +70,68 @@ export default function ProductCatalog() {
   }
 
   return (
-    <div className="grid gap-6 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
-      <div className="min-w-0">
-        <CategoryFilter
-          onSelectCategory={handleFilterCategory}
-          selectedCategoryId={categoryId}
-        />
-      </div>
-
-      <div className="grid gap-5">
-        <div className="flex items-center justify-between rounded-[24px] border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Catalog
-            </p>
-            <h1 className="text-xl font-bold text-slate-950">Sản phẩm đang mở bán</h1>
-          </div>
-
-          <select
-            onChange={handleSortChange}
-            value={sortDirection}
-            id="products-filter"
-            className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-400"
-            aria-label="Lọc theo giá"
-          >
-            <option value="ASC">Giá thấp → cao</option>
-            <option value="DESC">Giá cao → thấp</option>
-          </select>
+    <section className="py-6 sm:py-8">
+      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+        <div className="min-w-0">
+          <CategoryFilter
+            onSelectCategory={handleFilterCategory}
+            selectedCategoryId={categoryId}
+          />
         </div>
 
-        {isLoading ? (
-          <Loading />
-        ) : productList.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center text-slate-500">
-            Không có sản phẩm
-          </div>
-        ) : (
-              <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]">
-            {productList.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+        <div className="surface-primary grid gap-5 p-5 sm:p-6">
+          <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2">
+              <p className="section-kicker">Catalog</p>
+              <h1 className="text-[30px] font-bold tracking-[-0.03em] text-slate-950">
+                Sản phẩm đang mở bán
+              </h1>
+              <p className="max-w-2xl text-sm leading-7 text-slate-600">
+                Giao diện danh sách được tối ưu cho việc quét nhanh hình ảnh, giá và trạng thái
+                mà không gây nặng mắt.
+              </p>
+            </div>
 
-        {totalPages > 0 ? (
-          <div className="pt-2">
-            <Pagination
-              currentPage={currentPage}
-              totalPage={totalPages}
-              onPageChange={handlePageChange}
-            />
+            <label className="grid gap-2 text-sm font-medium text-slate-600">
+              Sắp xếp theo giá
+              <select
+                onChange={handleSortChange}
+                value={sortDirection}
+                id="products-filter"
+                className="h-11 rounded-[12px] border border-border bg-white px-4 text-sm font-medium text-slate-700 outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-ring"
+                aria-label="Lọc theo giá"
+              >
+                <option value="ASC">Giá thấp đến cao</option>
+                <option value="DESC">Giá cao đến thấp</option>
+              </select>
+            </label>
           </div>
-        ) : null}
+
+          {isLoading ? (
+            <Loading />
+          ) : productList.length === 0 ? (
+            <div className="surface-secondary px-6 py-16 text-center text-slate-500">
+              Không có sản phẩm phù hợp với bộ lọc hiện tại.
+            </div>
+          ) : (
+            <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]">
+              {productList.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+
+          {totalPages > 0 ? (
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPage={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
