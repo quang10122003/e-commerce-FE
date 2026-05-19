@@ -1,23 +1,32 @@
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import OrderStatus from "@/types/order/OrderStatus"
-import React from "react"
 
 type PropsOrderStatusStepper = {
   orderStatus: OrderStatus[]
   selecStatus: string
-  setSelecStatus: React.Dispatch<React.SetStateAction<string>>
+}
+
+function buildOrderStatusHref(status: string) {
+  if (status === "All") {
+    return "/order"
+  }
+
+  const params = new URLSearchParams()
+  params.set("status", status)
+
+  return `/order?${params}`
 }
 
 export default function OrderStatusStepper({
   orderStatus,
   selecStatus,
-  setSelecStatus,
 }: PropsOrderStatusStepper) {
   return (
     <section className="surface-primary flex gap-2 overflow-x-auto p-3">
       {orderStatus.map((item) => (
-        <button
-          onClick={() => setSelecStatus(item.value)}
+        <Link
+          href={buildOrderStatusHref(item.value)}
           key={item.value}
           className={cn(
             "rounded-[12px] px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
@@ -25,10 +34,9 @@ export default function OrderStatusStepper({
               ? "bg-primary-soft text-primary"
               : "bg-white text-slate-600 hover:bg-primary-soft hover:text-primary"
           )}
-          type="button"
         >
           {item.title}
-        </button>
+        </Link>
       ))}
     </section>
   )

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 
 import CategoryCard from "@/components/home/CategoryCard"
-import { useGetCategoriesQuery } from "@/features/category/categoryApi"
 import { cn } from "@/lib/utils"
 import { Category } from "@/types/category/Category"
 
@@ -13,9 +12,11 @@ type DragState = {
   scrollLeft: number
 }
 
-export default function CategoryList() {
-  const { data } = useGetCategoriesQuery()
-  const categories: Category[] = data?.data ?? []
+type CategoryListProps = {
+  categories: Category[]
+}
+
+export default function CategoryList({ categories }: CategoryListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const dragStateRef = useRef<DragState>({
     isDragging: false,

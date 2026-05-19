@@ -1,6 +1,7 @@
 "use client"
 
 import { Provider } from "react-redux"
+import type { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse"
 import Footer from "@/components/footer/Footer"
 import { NotificationProvider } from "@/components/ui/NotificationProvider"
 import AuthModals from "./AuthModals"
@@ -12,13 +13,15 @@ import { TailwindIndicator } from "@/components/TailwindIndicatort"
 
 type ProvidersProps = {
   children: React.ReactNode
+  hasSessionCookie: boolean
+  initialUser: CurrentUserResponse | null
 }
 
-export default function Providers({ children }: ProvidersProps) {
+export default function Providers({ children, hasSessionCookie, initialUser }: ProvidersProps) {
   return (
     <Provider store={store}>
       <NotificationProvider>
-        <SessionBootstrap />
+        <SessionBootstrap hasSessionCookie={hasSessionCookie} initialUser={initialUser} />
         <AuthModals />
         <div className="flex min-h-screen flex-col">
           <Navbar />

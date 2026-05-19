@@ -6,18 +6,16 @@ import { useRouter } from "next/navigation"
 import { RegisterOptions, useForm, useWatch } from "react-hook-form"
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
-import { Input } from "@/components/ui/input"
-import MainButton from "@/components/ui/main-button"
-import { useNotification } from "@/components/ui/NotificationProvider"
-import { setAuthenticatedUser } from "@/features/auth/authSlice"
-import { setStoredAuth } from "@/features/auth/authStorage"
-import { useLoginMutation, useSignupMutation } from "@/features/auth/loginApi"
-import { closeLogin } from "@/features/auth/loginSlice"
+import { backendApi, useLoginMutation, useSignupMutation } from "@/client/api/backend-api"
+import { closeLogin } from "@/client/session/loginModalSlice"
 import {
   clearPendingRedirectUrls,
   popPendingRedirectUrl,
-} from "@/features/auth/privateApi"
-import { tokenApi } from "@/features/auth/tokenApi"
+} from "@/client/session/redirect-stack"
+import { setAuthenticatedUser } from "@/client/session/sessionSlice"
+import { Input } from "@/components/ui/input"
+import MainButton from "@/components/ui/main-button"
+import { useNotification } from "@/components/ui/NotificationProvider"
 import { cn } from "@/lib/utils"
 import { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import { AuthResponse } from "@/types/Auth/AuthResponse"
@@ -200,11 +198,6 @@ export default function AuthModal() {
         throw new Error("Auth response is missing data.")
       }
 
-      setStoredAuth({
-        accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
-      })
-
       setAuthenticatedUser(dispatch, {
         userId: response.data.userId,
         email: response.data.email,
@@ -218,7 +211,7 @@ export default function AuthModal() {
 
       const redirectUrl = popPendingRedirectUrl()
 
-      dispatch(tokenApi.util.resetApiState())
+      dispatch(backendApi.util.resetApiState())
       handleCloseModal()
 
       if (redirectUrl) {

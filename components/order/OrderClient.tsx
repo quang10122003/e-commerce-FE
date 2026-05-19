@@ -1,23 +1,19 @@
-"use client"
-
-import { useState } from "react"
-
 import Container from "../shared/Container"
-import Loading from "../shared/Loading"
 import ContainerOrder from "./ContainerOrder"
 import OrderStatusStepper from "./OrderStatusStepper"
-import { useGetOrderQuery } from "@/features/auth/tokenApi"
 import { OrderResponse } from "@/types/order/OrderResponse"
 import OrderStatus from "@/types/order/OrderStatus"
 
-export default function OrderClient() {
-  const { data, error, isLoading } = useGetOrderQuery()
-  const orders: OrderResponse[] = data?.data ?? []
-  const [selecStatus, setSelecStatus] = useState<string>("All")
+type OrderClientProps = {
+  errorMessage: string | null
+  orders: OrderResponse[]
+  selectedStatus: string
+}
 
+export default function OrderClient({ errorMessage, orders, selectedStatus }: OrderClientProps) {
   const filteredOrders = orders.filter((order) => {
-    if (selecStatus === "All") return true
-    return order.status === selecStatus
+    if (selectedStatus === "All") return true
+    return order.status === selectedStatus
   })
 
   const status: OrderStatus[] = [
@@ -59,13 +55,10 @@ export default function OrderClient() {
 
         <OrderStatusStepper
           orderStatus={status}
-          setSelecStatus={setSelecStatus}
-          selecStatus={selecStatus}
+          selecStatus={selectedStatus}
         />
 
-        {isLoading ? (
-          <Loading />
-        ) : error ? (
+        {errorMessage ? (
           <div className="surface-primary px-6 py-16 text-center">
             <p className="text-base font-semibold text-slate-950">Không thể tải đơn hàng</p>
             <p className="mt-2 text-sm leading-7 text-slate-600">

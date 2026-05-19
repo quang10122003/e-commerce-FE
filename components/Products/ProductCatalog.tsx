@@ -1,40 +1,36 @@
 "use client"
 
-import { ChangeEvent } from "react"
+import { ChangeEvent, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import CategoryFilter from "@/components/Products/CategoryFilter"
 import Pagination from "@/components/Products/Pagination"
 import ProductCard from "@/components/Products/ProductCard"
 import Loading from "@/components/shared/Loading"
-import { useGetActiveProductsQuery } from "@/features/product/productApi"
+import type { ApiResponseType, PagedResponseType } from "@/types/ApiResponse/ApiResponseType"
+import type { Category } from "@/types/category/Category"
+import type { ProductCatalogFilters } from "@/types/product/ProductCatalogFilters"
 import { ProductType } from "@/types/product/ProductsummerType"
 
-export default function ProductCatalog() {
+type ProductCatalogProps = {
+  categories: Category[]
+  filters: ProductCatalogFilters
+  productsPage: ApiResponseType<PagedResponseType<ProductType>>
+}
+
+export default function ProductCatalog({ categories, filters, productsPage }: ProductCatalogProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const categoryIdParam = searchParams.get("categoryId")
-  const pageParam = Number(searchParams.get("page"))
-  const sortValue = searchParams.get("sort") ?? "price,ASC"
-  const sortDirection = sortValue.split(",")[1] ?? "ASC"
-  const categoryId =
-    categoryIdParam && !Number.isNaN(Number(categoryIdParam))
-      ? Number(categoryIdParam)
-      : undefined
-  const currentPage = !Number.isNaN(pageParam) && pageParam > 0 ? pageParam : 1
-
-  const { data, isLoading } = useGetActiveProductsQuery({
-    page: currentPage - 1,
-    size: 11,
-    sort: sortValue,
-    categoryId,
-  })
-  const productList: ProductType[] = data?.data?.items ?? []
-  const totalPages = data?.data?.totalPages ?? 0
+  const [isPending, startTransition] = useTransition()
+  const productList: ProductType[] = productsPage.data?.items ?? []
+  const totalPages = productsPage.data?.totalPages ?? 0
 
   function updateProductFilters(nextParams: URLSearchParams) {
     const nextQuery = nextParams.toString()
-    router.push(nextQuery ? `/products?${nextQuery}` : "/products")
+
+    startTransition(() => {
+      router.push(nextQuery ? `/products?${nextQuery}` : "/products")
+    })
   }
 
   function handleFilterCategory(nextCategoryId?: number) {
@@ -74,8 +70,9 @@ export default function ProductCatalog() {
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0">
           <CategoryFilter
+            categories={categories}
             onSelectCategory={handleFilterCategory}
-            selectedCategoryId={categoryId}
+            selectedCategoryId={filters.categoryId}
           />
         </div>
 
@@ -96,7 +93,7 @@ export default function ProductCatalog() {
               Sắp xếp theo giá
               <select
                 onChange={handleSortChange}
-                value={sortDirection}
+                value={filters.sortDirection}
                 id="products-filter"
                 className="h-11 rounded-[12px] border border-border bg-white px-4 text-sm font-medium text-slate-700 outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-ring"
                 aria-label="Lọc theo giá"
@@ -107,8 +104,12 @@ export default function ProductCatalog() {
             </label>
           </div>
 
-          {isLoading ? (
+          {isPending ? (
             <Loading />
+          ) : !productsPage.success ? (
+            <div className="surface-secondary px-6 py-16 text-center text-slate-500">
+              {productsPage.error?.message ?? productsPage.message}
+            </div>
           ) : productList.length === 0 ? (
             <div className="surface-secondary px-6 py-16 text-center text-slate-500">
               Không có sản phẩm phù hợp với bộ lọc hiện tại.
@@ -124,7 +125,7 @@ export default function ProductCatalog() {
           {totalPages > 0 ? (
             <div className="pt-2">
               <Pagination
-                currentPage={currentPage}
+                currentPage={filters.currentPage}
                 totalPage={totalPages}
                 onPageChange={handlePageChange}
               />

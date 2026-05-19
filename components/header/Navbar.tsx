@@ -5,14 +5,14 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ChevronDown, Menu, Search, ShoppingCart, X } from "lucide-react"
 
+import { backendApi, useGetCartQuery, useLazyGetCartQuery, useLogoutMutation } from "@/client/api/backend-api"
+import { closeLogin, openLogin } from "@/client/session/loginModalSlice"
+import { clearPendingRedirectUrls, pushPendingRedirectUrl } from "@/client/session/redirect-stack"
+import { clearAuthenticatedUser } from "@/client/session/sessionSlice"
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import Container from "@/components/shared/Container"
 import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
-import { clearAuthenticatedUser } from "@/features/auth/authSlice"
-import { openLogin } from "@/features/auth/loginSlice"
-import { pushPendingRedirectUrl } from "@/features/auth/privateApi"
-import { useGetCartQuery, useLazyGetCartQuery } from "@/features/auth/tokenApi"
 import { closeCartSidebar, openCartSidebar } from "@/features/cart/cartSidebarSlice"
 import { cn } from "@/lib/utils"
 import { useNotification } from "../ui/NotificationProvider"
@@ -38,6 +38,8 @@ const USER_MENU_ITEMS: UserMenuItem[] = [
   { action: "settings", label: "Cài đặt" },
   { action: "logout", label: "Đăng xuất" },
 ]
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL
 
 function getUserDisplayInfo(fullName?: string, email?: string) {
   const fallbackCharacter = fullName?.trim().charAt(0) || email?.trim().charAt(0) || "U"
@@ -65,6 +67,7 @@ export default function Navbar() {
 
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
   const isCartSidebarOpen = useAppSelector((state) => state.cartSidebar.isOpen)
+  const [logout] = useLogoutMutation()
   const { data: cartData } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
   })
@@ -112,10 +115,25 @@ export default function Navbar() {
     }
   }, [isCartSidebarOpen, dispatch])
 
-  function handleLogout() {
-    clearAuthenticatedUser(dispatch)
-    closeAllMenus()
-    dispatch(closeCartSidebar())
+  async function handleLogout() {
+    try {
+      await logout().unwrap()
+    } catch {
+      // Logout still clears local UI if the session cookie was already gone.
+    } finally {
+      clearAuthenticatedUser(dispatch)
+      clearPendingRedirectUrls()
+      dispatch(closeLogin())
+      closeAllMenus()
+      dispatch(closeCartSidebar())
+      dispatch(backendApi.util.resetApiState())
+
+      if (typeof window !== "undefined") {
+        window.location.assign(new URL("/", APP_URL ?? window.location.origin).toString())
+      } else {
+        router.replace("/")
+      }
+    }
     showNotification("Đăng xuất thành công", { variant: "success" })
   }
 

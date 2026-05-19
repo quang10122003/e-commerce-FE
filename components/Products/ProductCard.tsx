@@ -1,9 +1,11 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 
+import { useAddCartMutation } from "@/client/api/backend-api"
 import { Card, CardContent } from "@/components/ui/card"
 import MainButton from "@/components/ui/main-button"
-import { useAddCartMutation } from "@/features/auth/tokenApi"
 import { extractErrorMessage } from "@/lib/error"
 import { formatCurrency } from "@/lib/format"
 import { ProductType } from "@/types/product/ProductsummerType"

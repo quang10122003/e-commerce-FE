@@ -1,15 +1,23 @@
 "use client"
 
 import { useEffect } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useAppDispatch } from "@/app/hooks"
+import { useLazyGetMeQuery } from "@/client/api/backend-api"
+import { openLogin } from "@/client/session/loginModalSlice"
+import { pushPendingRedirectUrl } from "@/client/session/redirect-stack"
 import {
     clearAuthenticatedUser,
     finishAuthCheck,
     setAuthenticatedUser,
     startAuthCheck,
-} from "@/features/auth/authSlice"
-import { getAccessToken, getRefreshToken } from "@/features/auth/authStorage"
-import { useLazyGetMeQuery } from "@/features/auth/tokenApi"
+} from "@/client/session/sessionSlice"
+import type { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse"
+
+type SessionBootstrapProps = {
+    hasSessionCookie: boolean
+    initialUser: CurrentUserResponse | null
+}
 
 function isAuthorizationError(error: unknown) {
     if (!error || typeof error !== "object" || !("status" in error)) {
@@ -21,37 +29,38 @@ function isAuthorizationError(error: unknown) {
     return status === 401 || status === 403
 }
 
-export default function SessionBootstrap() {
+export default function SessionBootstrap({ hasSessionCookie, initialUser }: SessionBootstrapProps) {
     const dispatch = useAppDispatch()
+    const pathname = usePathname()
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [getMe] = useLazyGetMeQuery()
 
     useEffect(() => {
         async function restoreAuth() {
-            // Khoa UI auth tam thoi de navbar va modal cho ket qua bootstrap chinh xac.
+            // Keep navbar/auth modal deterministic while the server cookie session is checked.
             dispatch(startAuthCheck())
 
-            const accessToken = getAccessToken()
-            const refreshToken = getRefreshToken()
+            if (initialUser) {
+                setAuthenticatedUser(dispatch, initialUser)
+                dispatch(finishAuthCheck())
+                return
+            }
 
-            // Neu local storage khong con bat ky token nao thi xem nhu da dang xuat hoan toan.
-            if (!accessToken && !refreshToken) {
+            if (!hasSessionCookie) {
                 clearAuthenticatedUser(dispatch)
                 dispatch(finishAuthCheck())
                 return
             }
 
             try {
-                // /auth/me la diem su that de xac nhan token con hop le va lay profile moi nhat.
+                // /auth/me goes through the Next proxy, so refresh-token recovery stays server-side.
                 const meResponse = await getMe().unwrap()
 
                 if (meResponse.data) {
                     setAuthenticatedUser(dispatch, meResponse.data)
                 }
             } catch (error) {
-                // Chi xoa phien khi server tra ve loi xac thuc ro rang.
-                // Loi mang tam thoi hoac loi 5xx khong nen ep nguoi dung bi dang xuat.
-                // Chỉ xóa phiên khi server trả về lỗi xác thực rõ ràng.
-                // Lỗi mạng hoặc lỗi 5xx tạm thời không nên làm người dùng bị đăng xuất ngay.
                 if (isAuthorizationError(error)) {
                     clearAuthenticatedUser(dispatch)
                 }
@@ -61,7 +70,22 @@ export default function SessionBootstrap() {
         }
 
         restoreAuth()
-    }, [dispatch, getMe])
+    }, [dispatch, getMe, hasSessionCookie, initialUser])
+
+    useEffect(() => {
+        if (searchParams.get("auth") !== "login") {
+            return
+        }
+
+        const nextPath = searchParams.get("next")
+
+        pushPendingRedirectUrl(nextPath ?? pathname)
+        dispatch(openLogin())
+
+        if (pathname === "/") {
+            router.replace("/")
+        }
+    }, [dispatch, pathname, router, searchParams])
 
     return null
 }

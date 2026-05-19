@@ -1,5 +1,3 @@
-"use client"
-
 import ProductDetailBreadcrumb from "@/components/Products/detail/ProductDetailBreadcrumb"
 import ProductDetailGallery from "@/components/Products/detail/ProductDetailGallery"
 import ProductDetailOverview from "@/components/Products/detail/ProductDetailOverview"
@@ -7,28 +5,14 @@ import ProductDetailPurchaseCard from "@/components/Products/detail/ProductDetai
 import ProductDetailSpecifications from "@/components/Products/detail/ProductDetailSpecifications"
 import ProductDetailSummary from "@/components/Products/detail/ProductDetailSummary"
 import Container from "@/components/shared/Container"
-import Loading from "@/components/shared/Loading"
-import { useGetProductByIdQuery } from "@/features/product/productApi"
 import { ProductDetail } from "@/types/product/productDeteilType"
 
 type ProductDetailClientProps = {
-  id: number
+  product: ProductDetail
 }
 
-export default function ProductDetailClient({ id }: ProductDetailClientProps) {
-  const { data, isLoading } = useGetProductByIdQuery(id)
-
-  if (isLoading) {
-    return (
-      <Container className="py-8 sm:py-10">
-        <Loading />
-      </Container>
-    )
-  }
-
-  if (!data?.data) return null
-
-  const productdata: ProductDetail = data.data
+export default function ProductDetailClient({ product }: ProductDetailClientProps) {
+  const productdata: ProductDetail = product
   const listImage: string[] = [productdata.thumbnail, ...productdata.url]
 
   return (

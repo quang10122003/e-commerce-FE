@@ -1,12 +1,9 @@
-"use client"
-
 import Link from "next/link"
 
 import Container from "@/components/shared/Container"
-import Loading from "@/components/shared/Loading"
 import MainButton from "@/components/ui/main-button"
-import { useGetCartQuery } from "@/features/auth/tokenApi"
 import { formatCurrency } from "@/lib/format"
+import type { CartResponse } from "@/types/cart/CartResponse"
 
 function getProductInitials(name: string) {
   return name
@@ -17,10 +14,12 @@ function getProductInitials(name: string) {
     .join("")
 }
 
-export default function CartPageClient() {
-  const { data, error, isLoading, isFetching } = useGetCartQuery()
-  const cartData = data?.data
+type CartPageClientProps = {
+  cartData: CartResponse | null
+  errorMessage: string | null
+}
 
+export default function CartPageClient({ cartData, errorMessage }: CartPageClientProps) {
   return (
     <Container className="py-6 sm:py-8 lg:py-10">
       <div className="space-y-6">
@@ -42,9 +41,7 @@ export default function CartPageClient() {
           </div>
         </div>
 
-        {isLoading || isFetching ? (
-          <Loading />
-        ) : error ? (
+        {errorMessage ? (
           <div className="surface-primary px-6 py-16 text-center">
             <p className="text-base font-semibold text-slate-950">Không thể tải giỏ hàng</p>
             <p className="mt-2 text-sm leading-7 text-slate-600">

@@ -1,12 +1,11 @@
-"use client"
-
 import ProductCard from "@/components/Products/ProductCard"
-import { useGetActiveProductsTopSellingQuery } from "@/features/product/productApi"
+import type { ProductType } from "@/types/product/ProductsummerType"
 
-export default function TopSellingProducts() {
-  const { data } = useGetActiveProductsTopSellingQuery()
-  const products = data?.data ?? []
+type TopSellingProductsProps = {
+  products: ProductType[]
+}
 
+export default function TopSellingProducts({ products }: TopSellingProductsProps) {
   return (
     <section className="space-y-5">
       <div className="space-y-2">

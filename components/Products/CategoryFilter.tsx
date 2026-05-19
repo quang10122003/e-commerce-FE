@@ -3,21 +3,20 @@
 import { useEffect, useRef, useState } from "react"
 import { ChevronDown } from "lucide-react"
 
-import { useGetCategoriesQuery } from "@/features/category/categoryApi"
 import { cn } from "@/lib/utils"
 import { Category } from "@/types/category/Category"
 
 type CategoryFilterProps = {
+  categories: Category[]
   onSelectCategory: (categoryId?: number) => void
   selectedCategoryId?: number
 }
 
 export default function CategoryFilter({
+  categories,
   onSelectCategory,
   selectedCategoryId,
 }: CategoryFilterProps) {
-  const { data, isLoading } = useGetCategoriesQuery()
-  const categories: Category[] = data?.data ?? []
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId)
@@ -39,10 +38,6 @@ export default function CategoryFilter({
   function handleChangeCategory(value?: number) {
     onSelectCategory(value)
     setIsDropdownOpen(false)
-  }
-
-  if (isLoading) {
-    return <div className="surface-primary p-5 text-sm text-slate-500">Đang tải danh mục...</div>
   }
 
   return (

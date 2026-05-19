@@ -4,6 +4,9 @@ import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "@/styles/globals.css";
 import Providers from "./providers";
+import { serverPrivateFetch } from "@/server/backend-fetch";
+import { getServerSession } from "@/server/auth-session";
+import type { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse";
 config.autoAddCss = false;
 
 const appSans = Be_Vietnam_Pro({
@@ -23,11 +26,39 @@ export const metadata: Metadata = {
   description: "MyShop ecommerce frontend",
 };
 
-export default function RootLayout({
+async function getInitialSessionUser() {
+  const session = await getServerSession();
+  const hasSessionCookie = Boolean(session.accessToken || session.refreshToken);
+
+  if (!hasSessionCookie) {
+    return {
+      hasSessionCookie,
+      initialUser: null,
+    };
+  }
+
+  try {
+    const response = await serverPrivateFetch<CurrentUserResponse>("/auth/me");
+
+    return {
+      hasSessionCookie,
+      initialUser: response.data,
+    };
+  } catch {
+    return {
+      hasSessionCookie,
+      initialUser: null,
+    };
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { hasSessionCookie, initialUser } = await getInitialSessionUser();
+
   return (
     <html
       lang="vi"
@@ -35,7 +66,9 @@ export default function RootLayout({
       className={`${appSans.variable} ${appMono.variable} h-full antialiased`}
     >
       <body className="min-h-screen bg-background text-foreground">
-        <Providers>{children}</Providers>
+        <Providers hasSessionCookie={hasSessionCookie} initialUser={initialUser}>
+          {children}
+        </Providers>
       </body>
     </html>
   );
