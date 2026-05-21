@@ -1,7 +1,7 @@
 import Link from "next/link"
 
 import { Category } from "@/types/category/Category"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
 
 type CategoryCardProps = {
   category: Category

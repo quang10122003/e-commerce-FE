@@ -11,6 +11,10 @@ type ProductsPageHrefOptions = {
   page?: number
 }
 
+type ProductsPageHrefPatch = Partial<Pick<ProductsUrlFilters, "categoryId" | "sort">> & {
+  page?: number
+}
+
 export function buildProductsPageHref({
   filters,
   page = filters.currentPage,
@@ -32,4 +36,17 @@ export function buildProductsPageHref({
   const query = params.toString()
 
   return `/products${query ? `?${query}` : ""}`
+}
+
+export function buildProductsPageHrefWithPatch(filters: ProductsUrlFilters, patch: ProductsPageHrefPatch) {
+  const hasCategoryPatch = Object.prototype.hasOwnProperty.call(patch, "categoryId")
+
+  return buildProductsPageHref({
+    filters: {
+      ...filters,
+      categoryId: hasCategoryPatch ? patch.categoryId : filters.categoryId,
+      sort: patch.sort ?? filters.sort,
+    },
+    page: patch.page ?? filters.currentPage,
+  })
 }

@@ -35,26 +35,29 @@ export default function SessionBootstrap({ hasSessionCookie, initialUser }: Sess
     const router = useRouter()
     const searchParams = useSearchParams()
     const [getMe] = useLazyGetMeQuery()
-
     useEffect(() => {
         async function restoreAuth() {
-            // Keep navbar/auth modal deterministic while the server cookie session is checked.
+            // Giữ cho navbar , modal xác thực hoạt động ổn định và nhất quán trong khi phiên cookie trên server đang được kiểm tra.
             dispatch(startAuthCheck())
 
+            // nếu có thông tin user
             if (initialUser) {
+                // set user và xác nhận authencation vào store
                 setAuthenticatedUser(dispatch, initialUser)
+                // check point check auth kết thúc
                 dispatch(finishAuthCheck())
                 return
             }
-
+            // nếu ko có cooki thì xóa thông tin user và authencation khỏi store
             if (!hasSessionCookie) {
                 clearAuthenticatedUser(dispatch)
                 dispatch(finishAuthCheck())
                 return
             }
 
+            // nếu ko có thông tin user mà lại có cokkki token thì tiến hành lấy thông tin user 
             try {
-                // /auth/me goes through the Next proxy, so refresh-token recovery stays server-side.
+                // auth/me đi qua proxy của Next, vì vậy việc khôi phục refresh - token sẽ được xử lý ở phía server.
                 const meResponse = await getMe().unwrap()
 
                 if (meResponse.data) {

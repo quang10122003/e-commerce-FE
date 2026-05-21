@@ -15,7 +15,6 @@ export default function OrderClient({ errorMessage, orders, selectedStatus }: Or
     if (selectedStatus === "All") return true
     return order.status === selectedStatus
   })
-
   const status: OrderStatus[] = [
     {
       title: "Tất cả",

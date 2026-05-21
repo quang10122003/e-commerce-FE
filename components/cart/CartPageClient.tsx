@@ -3,16 +3,8 @@ import Link from "next/link"
 import Container from "@/components/shared/Container"
 import MainButton from "@/components/ui/main-button"
 import { formatCurrency } from "@/lib/format"
+import { getProductInitials } from "@/lib/product-display"
 import type { CartResponse } from "@/types/cart/CartResponse"
-
-function getProductInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
-}
 
 type CartPageClientProps = {
   cartData: CartResponse | null

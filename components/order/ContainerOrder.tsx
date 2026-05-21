@@ -1,43 +1,11 @@
 import { OrderResponse } from "@/types/order/OrderResponse"
 import MainButton from "@/components/ui/main-button"
 import { formatCurrency, formatDateTime } from "@/lib/format"
+import { getOrderStatusMeta } from "@/lib/order-display"
+import { getProductInitials } from "@/lib/product-display"
 
 type Props = {
   filteredOrder: OrderResponse
-}
-
-function getOrderStatusMeta(status: OrderResponse["status"]) {
-  switch (status) {
-    case "PENDING":
-      return {
-        label: "Chờ xác nhận",
-        className: "bg-warning-soft text-[#9a6700]",
-      }
-    case "SHIPPING":
-      return {
-        label: "Đang vận chuyển",
-        className: "bg-primary-soft text-primary",
-      }
-    case "COMPLETED":
-      return {
-        label: "Hoàn thành",
-        className: "bg-success-soft text-[#166534]",
-      }
-    case "CANCELLED":
-      return {
-        label: "Đã hủy",
-        className: "bg-danger-soft text-[#b42318]",
-      }
-  }
-}
-
-function getProductInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
 }
 
 export default function ContainerOrder({ filteredOrder }: Props) {

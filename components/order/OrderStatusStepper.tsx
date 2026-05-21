@@ -1,21 +1,11 @@
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
+import { buildOrderStatusHref } from "@/lib/order-url"
 import OrderStatus from "@/types/order/OrderStatus"
 
 type PropsOrderStatusStepper = {
   orderStatus: OrderStatus[]
   selecStatus: string
-}
-
-function buildOrderStatusHref(status: string) {
-  if (status === "All") {
-    return "/order"
-  }
-
-  const params = new URLSearchParams()
-  params.set("status", status)
-
-  return `/order?${params}`
 }
 
 export default function OrderStatusStepper({

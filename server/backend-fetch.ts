@@ -1,7 +1,11 @@
 import "server-only"
 
+import { redirect } from "next/navigation"
+
+import { getApiResponseMessage } from "@/lib/error"
 import type { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import { refreshAccessToken } from "./auth-refresh"
+import { buildAuthRefreshRoute, hasAuthRefreshMarker } from "./auth-refresh-redirect"
 import { getServerSession } from "./auth-session"
 import { buildBackendUrl } from "./backend-url"
 
@@ -20,6 +24,7 @@ export type BackendFetchOptions = Omit<NextFetchOptions, "body" | "headers"> & {
   accessToken?: string
   body?: BackendRequestBody
   headers?: HeadersInit
+  refreshRedirectPath?: string
   timeoutMs?: number
 }
 
@@ -28,6 +33,7 @@ type NormalizedBody = {
   isJson: boolean
 }
 
+// Mang theo payload lỗi backend để nơi gọi xử lý theo từng status.
 export class BackendResponseError extends Error {
   payload: unknown
   status: number
@@ -40,6 +46,7 @@ export class BackendResponseError extends Error {
   }
 }
 
+// Nhận diện object hoặc array JS thuần cần gửi dưới dạng JSON.
 function isJsonBody(body: BackendRequestBody | undefined): body is JsonBody {
   if (!body || typeof body !== "object") {
     return false
@@ -64,6 +71,7 @@ function isJsonBody(body: BackendRequestBody | undefined): body is JsonBody {
   return true
 }
 
+// Chuyển body giống JSON và giữ nguyên các kiểu body native của fetch.
 function normalizeBody(body: BackendRequestBody | undefined): NormalizedBody {
   if (body === undefined || body === null) {
     return { body, isJson: false }
@@ -76,6 +84,7 @@ function normalizeBody(body: BackendRequestBody | undefined): NormalizedBody {
   return { body, isJson: false }
 }
 
+// Tạo header gửi lên backend và gắn auth khi có.
 function buildHeaders(
   headersInit: HeadersInit | undefined,
   accessToken: string | undefined,
@@ -98,6 +107,7 @@ function buildHeaders(
   return headers
 }
 
+// Chạy fetch với cả tín hiệu hủy từ caller và timeout cứng.
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -120,6 +130,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
+// Ánh xạ option nội bộ về nhóm option fetch chấp nhận.
 function toFetchInit(
   options: BackendFetchOptions,
   body: BodyInit | null | undefined,
@@ -142,26 +153,12 @@ function toFetchInit(
   }
 }
 
+// Đọc JSON an toàn để body rỗng hoặc lỗi không che mất status.
 async function readJson<TData>(response: Response) {
   return (await response.json().catch(() => null)) as TData | null
 }
 
-function getApiErrorMessage(payload: unknown, fallback: string) {
-  if (payload && typeof payload === "object") {
-    const response = payload as { error?: { message?: unknown }; message?: unknown }
-
-    if (typeof response.error?.message === "string" && response.error.message.trim()) {
-      return response.error.message
-    }
-
-    if (typeof response.message === "string" && response.message.trim()) {
-      return response.message
-    }
-  }
-
-  return fallback
-}
-
+// Gửi request thô tới backend với body, header và timeout đã chuẩn hóa.
 export async function fetchBackendRaw(path: string, options: BackendFetchOptions = {}) {
   const { body, isJson } = normalizeBody(options.body)
   const headers = buildHeaders(options.headers, options.accessToken, isJson)
@@ -173,6 +170,7 @@ export async function fetchBackendRaw(path: string, options: BackendFetchOptions
   )
 }
 
+// Phân tích API envelope và ném lỗi có kiểu cho response không phải 2xx.
 async function requestBackendJson<TData>(
   path: string,
   options: BackendFetchOptions
@@ -182,7 +180,7 @@ async function requestBackendJson<TData>(
 
   if (!response.ok) {
     throw new BackendResponseError(
-      getApiErrorMessage(payload, "Backend tra ve loi. Vui long thu lai."),
+      getApiResponseMessage(payload, "Backend tra ve loi. Vui long thu lai."),
       response.status,
       payload
     )
@@ -195,6 +193,7 @@ async function requestBackendJson<TData>(
   return payload
 }
 
+// Fetch endpoint public của backend mà không gắn token người dùng.
 export function serverPublicFetch<TData>(
   path: string,
   options: Omit<BackendFetchOptions, "accessToken"> = {}
@@ -202,16 +201,24 @@ export function serverPublicFetch<TData>(
   return requestBackendJson<TData>(path, options)
 }
 
+// Fetch endpoint riêng tư và làm mới auth khi SSR có thể tự phục hồi.
 export async function serverPrivateFetch<TData>(
   path: string,
   options: Omit<BackendFetchOptions, "accessToken"> = {}
 ) {
   const session = await getServerSession()
   let accessToken = session.accessToken
+  const refreshRedirectPath = options.refreshRedirectPath
+  const canRedirectToRefresh = refreshRedirectPath
+    ? !hasAuthRefreshMarker(refreshRedirectPath)
+    : false
 
-  // Server Components cannot reliably persist cookies, so refresh here is only used
-  // to complete the current render; the API proxy will persist the token for browser calls.
   if (!accessToken && session.refreshToken) {
+    // Server Component không lưu cookie ổn định, nên redirect qua Route Handler khi có thể.
+    if (refreshRedirectPath && canRedirectToRefresh) {
+      redirect(buildAuthRefreshRoute(refreshRedirectPath))
+    }
+
     accessToken = (await refreshAccessToken(session.refreshToken)) ?? undefined
   }
 
@@ -223,6 +230,11 @@ export async function serverPrivateFetch<TData>(
     })
   } catch (error) {
     if (error instanceof BackendResponseError && error.status === 401 && session.refreshToken) {
+      // Access token hết hạn có thể phục hồi một lần bằng làm mới rồi retry.
+      if (refreshRedirectPath && canRedirectToRefresh) {
+        redirect(buildAuthRefreshRoute(refreshRedirectPath))
+      }
+
       const nextAccessToken = await refreshAccessToken(session.refreshToken)
 
       if (nextAccessToken) {

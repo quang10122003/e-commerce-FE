@@ -10,6 +10,8 @@ import {
 import { clearAuthenticatedUser } from "@/client/session/sessionSlice"
 import { openLogin } from "@/client/session/loginModalSlice"
 import { pushPendingRedirectUrl } from "@/client/session/redirect-stack"
+import { getApiResponseMessage } from "@/lib/error"
+import { getCurrentBrowserRoute } from "@/lib/navigation"
 import type { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import type AddCartRequest from "@/types/cart/AddCartRequest"
 import type { CartResponse } from "@/types/cart/CartResponse"
@@ -18,12 +20,13 @@ import type { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse"
 import type { LoginRequest } from "@/types/Auth/LoginRequest"
 import type { SignupRequest } from "@/types/Auth/SignupRequest"
 import type { OrderResponse } from "@/types/order/OrderResponse"
+import { ChatMessage, ChatRoom, WsTicketResponse } from "@/types/chat/chat"
 
+// Gửi API client qua proxy backend của Next và kèm cookie.
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: "/api/backend",
   credentials: "include",
   prepareHeaders: (headers) => {
-    // Browser code only talks to Next; httpOnly cookies stay invisible to JavaScript.
     if (!headers.has("Accept")) {
       headers.set("Accept", "application/json")
     }
@@ -32,20 +35,7 @@ const rawBaseQuery = fetchBaseQuery({
   },
 })
 
-function getCurrentBrowserRoute() {
-  if (typeof window === "undefined") {
-    return null
-  }
-
-  const { hash, pathname, search } = window.location
-
-  if (!pathname.startsWith("/")) {
-    return null
-  }
-
-  return `${pathname}${search}${hash}`
-}
-
+// Nhận diện envelope lỗi ngay cả khi HTTP status vẫn là 2xx.
 function isFailedApiResponse(data: unknown) {
   return (
     typeof data === "object" &&
@@ -55,20 +45,7 @@ function isFailedApiResponse(data: unknown) {
   )
 }
 
-function getApiFailureMessage(data: unknown) {
-  const response = data as { error?: { message?: unknown }; message?: unknown }
-
-  if (typeof response.error?.message === "string" && response.error.message.trim()) {
-    return response.error.message
-  }
-
-  if (typeof response.message === "string" && response.message.trim()) {
-    return response.message
-  }
-
-  return "Request failed."
-}
-
+// Chuẩn hóa lỗi proxy và mở login khi API riêng tư phía client mất auth.
 const backendBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
@@ -80,7 +57,7 @@ const backendBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
     return {
       error: {
         data: result.data,
-        error: getApiFailureMessage(result.data),
+        error: getApiResponseMessage(result.data, "Request failed."),
         status: "CUSTOM_ERROR",
       },
     }
@@ -153,6 +130,30 @@ export const backendApi = createApi({
         url: "/auth/signup",
       }),
     }),
+    createWsTicket: builder.mutation<ApiResponseType<WsTicketResponse>, void>({
+      query: () => ({
+        method: "POST",
+        url: "/auth/ws-ticket",
+      }),
+    }),
+    createChatRoom: builder.mutation<ApiResponseType<ChatRoom>, number>({
+      query: (productId) => ({
+        method: "POST",
+        url: `/chat/rooms/${productId}`,
+      }),
+    }),
+    getProductChatRoom: builder.query<ApiResponseType<ChatRoom>, number>({
+      query: (productId) => ({
+        method: "GET",
+        url: `/chat/rooms/${productId}`,
+      }),
+    }),
+    getChatRoomMessages: builder.query<ApiResponseType<ChatMessage[]>, number>({
+      query: (roomId) => ({
+        method: "GET",
+        url: `/chat/rooms/${roomId}/messages`,
+      }),
+    }),
   }),
   reducerPath: "backendApi",
   tagTypes: ["Auth", "Cart", "Orders"],
@@ -168,4 +169,8 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useSignupMutation,
+  useCreateWsTicketMutation,
+  useCreateChatRoomMutation,
+  useLazyGetProductChatRoomQuery,
+  useLazyGetChatRoomMessagesQuery,
 } = backendApi

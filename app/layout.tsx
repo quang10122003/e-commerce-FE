@@ -26,10 +26,13 @@ export const metadata: Metadata = {
   description: "MyShop ecommerce frontend",
 };
 
+// lấy cooki
 async function getInitialSessionUser() {
   const session = await getServerSession();
+  // biến check có cooki ko 
   const hasSessionCookie = Boolean(session.accessToken || session.refreshToken);
 
+  // ko có cooki trả user trống
   if (!hasSessionCookie) {
     return {
       hasSessionCookie,
@@ -37,6 +40,7 @@ async function getInitialSessionUser() {
     };
   }
 
+  // có cooki thì lấy thông tin user
   try {
     const response = await serverPrivateFetch<CurrentUserResponse>("/auth/me");
 
@@ -58,7 +62,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { hasSessionCookie, initialUser } = await getInitialSessionUser();
-
   return (
     <html
       lang="vi"

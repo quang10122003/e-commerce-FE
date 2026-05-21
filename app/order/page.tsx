@@ -1,38 +1,57 @@
-import OrderClient from "@/components/order/OrderClient";
-import { serverPrivateFetch } from "@/server/backend-fetch";
-import type { OrderResponse, OrderStatus } from "@/types/order/OrderResponse";
+import { redirect, unstable_rethrow } from "next/navigation"
+
+import OrderClient from "@/components/order/OrderClient"
+import { getServerFetchErrorMessage } from "@/lib/error"
+import { buildInternalPathWithSearchParams } from "@/lib/navigation"
+import { parseSelectedOrderStatus } from "@/lib/order-url"
+import { readSearchParam } from "@/lib/search-params"
+import { AUTH_REFRESHED_SEARCH_PARAM, stripAuthRefreshMarker } from "@/server/auth-refresh-redirect"
+import { serverPrivateFetch } from "@/server/backend-fetch"
+import type { RouteSearchParams } from "@/lib/search-params"
+import type { OrderResponse } from "@/types/order/OrderResponse"
 
 type OrderPageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-const VALID_ORDER_STATUS = new Set<OrderStatus>(["PENDING", "SHIPPING", "COMPLETED", "CANCELLED"]);
-
-function readSearchParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
+  searchParams: Promise<RouteSearchParams>
 }
 
-function parseSelectedStatus(params: Record<string, string | string[] | undefined>) {
-  const status = readSearchParam(params.status);
+// Tải dữ liệu đơn hàng trên server và giữ nguyên luồng redirect của Next.
+async function getOrderInitialData(refreshRedirectPath: string) {
+  try {
+    const response = await serverPrivateFetch<OrderResponse[]>("/orders/me", {
+      refreshRedirectPath,
+    })
 
-  return status && VALID_ORDER_STATUS.has(status as OrderStatus) ? status : "All";
-}
+    return {
+      errorMessage: response.data ? null : "Khong the tai don hang.",
+      orders: response.data ?? [],
+    }
+  } catch (error) {
+    // Giữ redirect() do Next ném ra để luồng refresh auth tiếp tục chạy.
+    unstable_rethrow(error)
 
-async function getOrderInitialData() {
-  const response = await serverPrivateFetch<OrderResponse[]>("/orders/me").catch(() => null);
-
-  return {
-    errorMessage: response?.data ? null : "Khong the tai don hang.",
-    orders: response?.data ?? [],
-  };
+    return {
+      errorMessage: getServerFetchErrorMessage(error, "Khong the tai don hang."),
+      orders: [],
+    }
+  }
 }
 
 export default async function OrderPage({ searchParams }: OrderPageProps) {
-  const params = await searchParams;
-  const selectedStatus = parseSelectedStatus(params);
-  const { errorMessage, orders } = await getOrderInitialData();
+  const params = await searchParams
+  const selectedStatus = parseSelectedOrderStatus(params)
+  const refreshRedirectPath = buildInternalPathWithSearchParams("/order", params)
+  const hasRefreshMarker = readSearchParam(params[AUTH_REFRESHED_SEARCH_PARAM]) === "1"
+  const { errorMessage, orders } = await getOrderInitialData(refreshRedirectPath)
 
-  return(
-    <OrderClient errorMessage={errorMessage} orders={orders} selectedStatus={selectedStatus}/>
+  if (!errorMessage && hasRefreshMarker) {
+    redirect(stripAuthRefreshMarker(refreshRedirectPath))
+  }
+
+  return (
+    <OrderClient
+      errorMessage={errorMessage}
+      orders={orders}
+      selectedStatus={selectedStatus}
+    />
   )
 }

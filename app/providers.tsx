@@ -22,6 +22,7 @@ export default function Providers({ children, hasSessionCookie, initialUser }: P
     <Provider store={store}>
       <NotificationProvider>
         <SessionBootstrap hasSessionCookie={hasSessionCookie} initialUser={initialUser} />
+         {/* singin singout */}
         <AuthModals />
         <div className="flex min-h-screen flex-col">
           <Navbar />

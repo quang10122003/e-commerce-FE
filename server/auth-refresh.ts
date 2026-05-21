@@ -2,6 +2,7 @@ import type { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import type { RefreshResponse } from "@/types/Auth/RefreshResponse"
 import { buildBackendUrl } from "./backend-url"
 
+// call api rềtch token
 export async function refreshAccessToken(refreshToken?: string) {
   if (!refreshToken) {
     return null

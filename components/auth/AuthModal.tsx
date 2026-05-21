@@ -16,9 +16,8 @@ import { setAuthenticatedUser } from "@/client/session/sessionSlice"
 import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { useNotification } from "@/components/ui/NotificationProvider"
-import { cn } from "@/lib/utils"
-import { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
-import { AuthResponse } from "@/types/Auth/AuthResponse"
+import { cn } from "@/lib/cn"
+import { getApiResponseMessage } from "@/lib/error"
 
 type AuthMode = "login" | "register"
 
@@ -68,24 +67,6 @@ const REGISTER_FIELDS: FieldConfig[] = [
     placeholder: "Nhập lại mật khẩu",
   },
 ]
-
-function getApiErrorMessage(error: unknown) {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "data" in error &&
-    typeof error.data === "object" &&
-    error.data !== null
-  ) {
-    const apiResponse = error.data as ApiResponseType<AuthResponse>
-
-    if (typeof apiResponse.message === "string" && apiResponse.message.trim()) {
-      return apiResponse.message
-    }
-  }
-
-  return "Không thể xử lý yêu cầu. Vui lòng thử lại."
-}
 
 export default function AuthModal() {
   const dispatch = useAppDispatch()
@@ -217,12 +198,15 @@ export default function AuthModal() {
       if (redirectUrl) {
         router.replace(redirectUrl)
       }
-
-      router.refresh()
     } catch (error) {
       setError("root", {
         type: "server",
-        message: getApiErrorMessage(error),
+        message: getApiResponseMessage(
+          typeof error === "object" && error !== null && "data" in error
+            ? (error as { data?: unknown }).data
+            : null,
+          "Khong the xu ly yeu cau. Vui long thu lai."
+        ),
       })
     }
   }
@@ -255,7 +239,7 @@ export default function AuthModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-center px-4 py-6 sm:items-center">
+    <div className="fixed inset-0 z-200 flex items-start justify-center px-4 py-6 sm:items-center">
       <button
         className="absolute inset-0 bg-slate-950/18"
         onClick={handleCloseModal}

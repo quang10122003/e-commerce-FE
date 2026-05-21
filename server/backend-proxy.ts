@@ -19,18 +19,27 @@ export type BackendProxyRouteContext = {
 }
 
 const LOCAL_LOGOUT_PATH = "/auth/logout"
-const PUBLIC_BACKEND_PATHS = new Set(["/auth/login", "/auth/signup", "/categories", "/products/active", "/products/topSelling"])
+const PUBLIC_BACKEND_PATHS = new Set([
+  "/auth/login",
+  "/auth/signup",
+  "/categories",
+  "/products/active",
+  "/products/topSelling",
+])
 const REQUEST_HEADERS = ["accept", "content-type"]
 const RESPONSE_HEADERS = ["content-type", "content-disposition", "cache-control"]
 
+// Xác định status không được có response body.
 function isEmptyResponse(status: number) {
   return status === 204 || status === 205 || status === 304
 }
 
+// Giữ các request public không kèm header authorization của user.
 function isPublicBackendPath(pathname: string) {
   return PUBLIC_BACKEND_PATHS.has(pathname) || /^\/products\/\d+$/.test(pathname)
 }
 
+// Dựng lại đường dẫn backend từ catch-all route và giữ nguyên query string.
 async function buildBackendPath(request: NextRequest, context: BackendProxyRouteContext) {
   const { path } = await context.params
   const pathname = `/${path.map(encodeURIComponent).join("/")}`
@@ -41,6 +50,7 @@ async function buildBackendPath(request: NextRequest, context: BackendProxyRoute
   }
 }
 
+// Chỉ chuyển tiếp các request header backend cần.
 function pickRequestHeaders(request: NextRequest) {
   const headers = new Headers()
 
@@ -55,6 +65,7 @@ function pickRequestHeaders(request: NextRequest) {
   return headers
 }
 
+// Chỉ trả các response header an toàn về browser.
 function pickResponseHeaders(headers: Headers) {
   const nextHeaders = new Headers()
 
@@ -69,6 +80,7 @@ function pickResponseHeaders(headers: Headers) {
   return nextHeaders
 }
 
+// Chỉ đọc request body với các method được phép có body.
 async function readRequestBody(request: NextRequest) {
   if (request.method === "GET" || request.method === "HEAD") {
     return undefined
@@ -79,6 +91,7 @@ async function readRequestBody(request: NextRequest) {
   return body.byteLength > 0 ? body : undefined
 }
 
+// Phân tích payload JSON mà không làm hỏng response proxy không phải JSON.
 function parseJson(buffer: ArrayBuffer, contentType: string | null) {
   if (!contentType?.includes("application/json") || buffer.byteLength === 0) {
     return null
@@ -91,6 +104,7 @@ function parseJson(buffer: ArrayBuffer, contentType: string | null) {
   }
 }
 
+// Kiểm tra payload backend có chứa token login/signup không.
 function isAuthPayload(payload: unknown): payload is ApiResponseType<AuthResponse> {
   if (
     typeof payload !== "object" ||
@@ -107,6 +121,7 @@ function isAuthPayload(payload: unknown): payload is ApiResponseType<AuthRespons
   return typeof data.accessToken === "string" && typeof data.refreshToken === "string"
 }
 
+// Tạo API envelope lỗi chuẩn cho lỗi proxy.
 function buildErrorResponse(message: string): ApiResponseType<null> {
   return {
     data: null,
@@ -120,10 +135,12 @@ function buildErrorResponse(message: string): ApiResponseType<null> {
   }
 }
 
+// Bọc API envelope trong NextResponse với status tương ứng.
 function jsonResponse(payload: ApiResponseType<null>, status: number) {
   return NextResponse.json(payload, { status })
 }
 
+// Xử lý logout nội bộ mà không gọi backend.
 function handleLocalLogout() {
   const response = jsonResponse(
     {
@@ -141,6 +158,7 @@ function handleLocalLogout() {
   return response
 }
 
+// Chuyển Response từ backend thành NextResponse trả về browser.
 async function toNextResponse(backendResponse: Response) {
   const buffer = await backendResponse.arrayBuffer()
   const contentType = backendResponse.headers.get("content-type")
@@ -153,6 +171,7 @@ async function toNextResponse(backendResponse: Response) {
   return { payload, response }
 }
 
+// Proxy API request từ trình duyệt tới backend và gom xử lý cookie auth.
 export async function handleBackendProxyRequest(
   request: NextRequest,
   context: BackendProxyRouteContext
@@ -178,8 +197,8 @@ export async function handleBackendProxyRequest(
 
     let nextAccessToken: string | null = null
 
-    // A private browser call gets one server-side refresh attempt before the user is logged out.
     if (!isPublicPath && backendResponse.status === 401 && session.refreshToken) {
+      // Làm mới một lần rồi retry lại private request ban đầu.
       nextAccessToken = await refreshAccessToken(session.refreshToken)
 
       if (nextAccessToken) {

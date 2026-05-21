@@ -1,21 +1,18 @@
 import "server-only"
 
 import { DEFAULT_PRODUCT_SORT } from "@/lib/products-url"
+import { readSearchParam, type RouteSearchParams } from "@/lib/search-params"
 import type { ProductCatalogFilters } from "@/types/product/ProductCatalogFilters"
 
 export const PRODUCTS_PAGE_SIZE = 11
 
-export type ProductSearchParams = Record<string, string | string[] | undefined>
+export type ProductSearchParams = RouteSearchParams
 
 type ActiveProductsQueryParams = {
   categoryId?: number
   page: number
   size: number
   sort: string
-}
-
-function readSearchParam(value: string | string[] | undefined, fallback = "") {
-  return Array.isArray(value) ? value[0] ?? fallback : value ?? fallback
 }
 
 function normalizeSort(value: string) {

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import CategoryCard from "@/components/home/CategoryCard"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
 import { Category } from "@/types/category/Category"
 
 type DragState = {

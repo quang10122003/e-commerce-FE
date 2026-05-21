@@ -9,18 +9,10 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import MainButton from "@/components/ui/main-button"
 import { closeCartSidebar } from "@/features/cart/cartSidebarSlice"
 import { formatCurrency } from "@/lib/format"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
+import { getProductInitials } from "@/lib/product-display"
 
 const MAX_VISIBLE_ITEMS = 4
-
-function getProductInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
-}
 
 export default function CartSidebar() {
   const dispatch = useAppDispatch()

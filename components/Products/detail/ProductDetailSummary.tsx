@@ -5,7 +5,8 @@ import { BadgeCheck, Boxes, Star, Store, type LucideIcon } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/format"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
+import { getProductStatusLabel, getProductStockLabel } from "@/lib/product-display"
 import { ProductDetail } from "@/types/product/productDeteilType"
 
 type ProductDetailSummaryProps = {
@@ -21,18 +22,6 @@ type SummaryItem = {
 
 const fixedTags = ["New arrival", "Free ship nội thành", "Đổi trả trong 7 ngày"]
 
-function getStatusLabel(status: ProductDetail["status"]) {
-  return status === "ACTIVE" ? "Đang mở bán" : "Tạm ngưng"
-}
-
-function getStockLabel(stock: number) {
-  if (stock > 0) {
-    return `Còn ${stock} sản phẩm`
-  }
-
-  return "Hết hàng"
-}
-
 const summaryItems: SummaryItem[] = [
   {
     key: "brand",
@@ -44,13 +33,13 @@ const summaryItems: SummaryItem[] = [
     key: "stock",
     icon: Boxes,
     label: "Tồn kho",
-    getValue: (product: ProductDetail) => getStockLabel(product.stock),
+    getValue: (product: ProductDetail) => getProductStockLabel(product.stock),
   },
   {
     key: "status",
     icon: BadgeCheck,
     label: "Trạng thái",
-    getValue: (product: ProductDetail) => getStatusLabel(product.status),
+    getValue: (product: ProductDetail) => getProductStatusLabel(product.status),
   },
 ]
 
@@ -65,7 +54,7 @@ export default function ProductDetailSummary({ product }: ProductDetailSummaryPr
             {product.nameCategory}
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600">
-            {getStatusLabel(product.status)}
+            {getProductStatusLabel(product.status)}
           </span>
         </div>
 

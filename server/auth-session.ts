@@ -18,6 +18,7 @@ export type AuthSession = {
   role?: string
 }
 
+// Áp dụng policy cookie auth dùng chung với thời hạn cụ thể.
 function cookieOptions(maxAge: number) {
   return {
     ...AUTH_COOKIE_OPTIONS,
@@ -25,6 +26,7 @@ function cookieOptions(maxAge: number) {
   }
 }
 
+// Đọc cookie auth từ Server Component và Route Handler.
 export async function getServerSession(): Promise<AuthSession> {
   const cookieStore = await cookies()
 
@@ -35,6 +37,7 @@ export async function getServerSession(): Promise<AuthSession> {
   }
 }
 
+// Đọc cookie auth trực tiếp từ request đi vào proxy.
 export function getRequestSession(request: NextRequest): AuthSession {
   return {
     accessToken: request.cookies.get(ACCESS_TOKEN_COOKIE_KEY)?.value,
@@ -43,6 +46,7 @@ export function getRequestSession(request: NextRequest): AuthSession {
   }
 }
 
+// Lưu access token mới sau login hoặc refresh.
 export function setAccessTokenSession(response: NextResponse, accessToken: string) {
   response.cookies.set(
     ACCESS_TOKEN_COOKIE_KEY,
@@ -50,7 +54,7 @@ export function setAccessTokenSession(response: NextResponse, accessToken: strin
     cookieOptions(ACCESS_TOKEN_MAX_AGE_SECONDS)
   )
 }
-
+// Lưu toàn bộ cookie auth backend trả về sau login/signup.
 export function setLoginSession(response: NextResponse, auth: AuthResponse) {
   setAccessTokenSession(response, auth.accessToken)
 
@@ -63,6 +67,7 @@ export function setLoginSession(response: NextResponse, auth: AuthResponse) {
   response.cookies.set(ROLE_COOKIE_KEY, auth.role, cookieOptions(ACCESS_TOKEN_MAX_AGE_SECONDS))
 }
 
+// Hết hạn toàn bộ cookie auth trên response trả ra.
 export function clearSession(response: NextResponse) {
   response.cookies.set(ACCESS_TOKEN_COOKIE_KEY, "", cookieOptions(0))
   response.cookies.set(REFRESH_TOKEN_COOKIE_KEY, "", cookieOptions(0))

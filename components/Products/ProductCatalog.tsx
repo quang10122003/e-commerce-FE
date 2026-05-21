@@ -1,12 +1,13 @@
 "use client"
 
 import { ChangeEvent, useTransition } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 import CategoryFilter from "@/components/Products/CategoryFilter"
 import Pagination from "@/components/Products/Pagination"
 import ProductCard from "@/components/Products/ProductCard"
 import Loading from "@/components/shared/Loading"
+import { buildProductsPageHrefWithPatch } from "@/lib/products-url"
 import type { ApiResponseType, PagedResponseType } from "@/types/ApiResponse/ApiResponseType"
 import type { Category } from "@/types/category/Category"
 import type { ProductCatalogFilters } from "@/types/product/ProductCatalogFilters"
@@ -20,49 +21,36 @@ type ProductCatalogProps = {
 
 export default function ProductCatalog({ categories, filters, productsPage }: ProductCatalogProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const productList: ProductType[] = productsPage.data?.items ?? []
   const totalPages = productsPage.data?.totalPages ?? 0
 
-  function updateProductFilters(nextParams: URLSearchParams) {
-    const nextQuery = nextParams.toString()
-
+  function updateProductFilters(href: string) {
     startTransition(() => {
-      router.push(nextQuery ? `/products?${nextQuery}` : "/products")
+      router.push(href)
     })
   }
 
   function handleFilterCategory(nextCategoryId?: number) {
-    const params = new URLSearchParams(searchParams.toString())
-
-    if (nextCategoryId) {
-      params.set("categoryId", String(nextCategoryId))
-    } else {
-      params.delete("categoryId")
-    }
-
-    params.delete("page")
-    updateProductFilters(params)
+    updateProductFilters(
+      buildProductsPageHrefWithPatch(filters, {
+        categoryId: nextCategoryId,
+        page: 1,
+      })
+    )
   }
 
   function handleSortChange(event: ChangeEvent<HTMLSelectElement>) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("sort", `price,${event.currentTarget.value}`)
-    params.delete("page")
-    updateProductFilters(params)
+    updateProductFilters(
+      buildProductsPageHrefWithPatch(filters, {
+        page: 1,
+        sort: `price,${event.currentTarget.value}`,
+      })
+    )
   }
 
   function handlePageChange(page: number) {
-    const params = new URLSearchParams(searchParams.toString())
-
-    if (page <= 1) {
-      params.delete("page")
-    } else {
-      params.set("page", String(page))
-    }
-
-    updateProductFilters(params)
+    updateProductFilters(buildProductsPageHrefWithPatch(filters, { page }))
   }
 
   return (

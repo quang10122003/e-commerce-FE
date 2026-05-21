@@ -1,13 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/format"
+import { getProductStatusLabel } from "@/lib/product-display"
 import { ProductDetail } from "@/types/product/productDeteilType"
 
 type ProductDetailSpecificationsProps = {
   product: ProductDetail
-}
-
-function getStatusLabel(status: ProductDetail["status"]) {
-  return status === "ACTIVE" ? "Đang mở bán" : "Tạm ngưng"
 }
 
 export default function ProductDetailSpecifications({
@@ -15,7 +12,7 @@ export default function ProductDetailSpecifications({
 }: ProductDetailSpecificationsProps) {
   const specifications = [
     { label: "Danh mục", value: product.nameCategory },
-    { label: "Trạng thái", value: getStatusLabel(product.status) },
+    { label: "Trạng thái", value: getProductStatusLabel(product.status) },
     { label: "Tồn kho", value: `${product.stock} sản phẩm` },
     { label: "Lượt mua", value: `${product.purchases} đơn` },
     { label: "Giá bán", value: formatCurrency(product.price) },

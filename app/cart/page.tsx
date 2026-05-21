@@ -1,18 +1,49 @@
+import { redirect, unstable_rethrow } from "next/navigation"
+
 import CartPageClient from "@/components/cart/CartPageClient"
+import { getServerFetchErrorMessage } from "@/lib/error"
+import { readSearchParam, type RouteSearchParams } from "@/lib/search-params"
+import { AUTH_REFRESHED_SEARCH_PARAM, stripAuthRefreshMarker } from "@/server/auth-refresh-redirect"
 import { serverPrivateFetch } from "@/server/backend-fetch"
 import type { CartResponse } from "@/types/cart/CartResponse"
 
-async function getCartInitialData() {
-  const response = await serverPrivateFetch<CartResponse>("/cart/me").catch(() => null)
+type CartPageProps = {
+  searchParams: Promise<RouteSearchParams>
+}
 
-  return {
-    cartData: response?.data ?? null,
-    errorMessage: response?.data ? null : "Khong the tai gio hang.",
+// Tải dữ liệu giỏ hàng trên server và giữ nguyên luồng redirect của Next.
+async function getCartInitialData(refreshRedirectPath: string) {
+  try {
+    const response = await serverPrivateFetch<CartResponse>("/cart/me", {
+      refreshRedirectPath,
+    })
+
+    return {
+      cartData: response.data ?? null,
+      errorMessage: response.data ? null : "Khong the tai gio hang.",
+    }
+  } catch (error) {
+    // Giữ redirect() do Next ném ra để luồng refresh auth tiếp tục chạy.
+    unstable_rethrow(error)
+
+    return {
+      cartData: null,
+      errorMessage: getServerFetchErrorMessage(error, "Khong the tai gio hang."),
+    }
   }
 }
 
-export default async function Page() {
-  const { cartData, errorMessage } = await getCartInitialData()
+export default async function Page({ searchParams }: CartPageProps) {
+  const params = await searchParams
+  const hasRefreshMarker = readSearchParam(params[AUTH_REFRESHED_SEARCH_PARAM]) === "1"
+  // Đường dẫn để route refresh quay lại đúng page này.
+  const refreshRedirectPath = hasRefreshMarker ? `/cart?${AUTH_REFRESHED_SEARCH_PARAM}=1` : "/cart"
+  const { cartData, errorMessage } = await getCartInitialData(refreshRedirectPath)
+
+  // Xóa marker làm mới dùng một lần sau khi dữ liệu tải xong.
+  if (cartData && hasRefreshMarker) {
+    redirect(stripAuthRefreshMarker(refreshRedirectPath))
+  }
 
   return <CartPageClient cartData={cartData} errorMessage={errorMessage} />
 }

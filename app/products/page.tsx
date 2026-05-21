@@ -1,5 +1,6 @@
 import ProductCatalog from "@/components/Products/ProductCatalog"
 import Container from "@/components/shared/Container"
+import { getServerFetchErrorMessage } from "@/lib/error"
 import { buildProductsPageHref } from "@/lib/products-url"
 import { serverPublicFetch } from "@/server/backend-fetch"
 import { buildActiveProductsBackendPath, parseProductCatalogFilters } from "@/server/products"
@@ -23,16 +24,23 @@ async function getProductsInitialData(filters: ReturnType<typeof parseProductCat
     productsPage:
       productsResult.status === "fulfilled"
         ? productsResult.value
-        : ({
-            data: null,
-            error: {
-              errorCode: "PRODUCTS_FETCH_FAILED",
-              message: "Khong the tai danh sach san pham.",
-            },
-            message: "Khong the tai danh sach san pham.",
-            success: false,
-            timestamp: new Date().toISOString(),
-          } satisfies ApiResponseType<PagedResponseType<ProductType>>),
+        : (() => {
+            const productsErrorMessage = getServerFetchErrorMessage(
+              productsResult.reason,
+              "Khong the tai danh sach san pham."
+            )
+
+            return {
+              data: null,
+              error: {
+                errorCode: "PRODUCTS_FETCH_FAILED",
+                message: productsErrorMessage,
+              },
+              message: productsErrorMessage,
+              success: false,
+              timestamp: new Date().toISOString(),
+            } satisfies ApiResponseType<PagedResponseType<ProductType>>
+          })(),
   }
 }
 

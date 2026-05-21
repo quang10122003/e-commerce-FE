@@ -49,11 +49,13 @@ export const {
 
 type SessionDispatch = Dispatch<UnknownAction>
 
+// hàm để set thông tin user vào store và set biến xác nhận Authenticated
 export function setAuthenticatedUser(dispatch: SessionDispatch, user: CurrentUserResponse) {
   dispatch(setCurrentUser(user))
   dispatch(setAuthenticated())
 }
 
+// xóa thông tin user cũ trong store và set authcation về flase
 export function clearAuthenticatedUser(dispatch: SessionDispatch) {
   dispatch(clearCurrentUser())
   dispatch(setUnauthenticated())

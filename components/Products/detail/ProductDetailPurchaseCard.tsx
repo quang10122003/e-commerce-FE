@@ -8,16 +8,12 @@ import MainButton from "@/components/ui/main-button"
 import { useNotification } from "@/components/ui/NotificationProvider"
 import { useAddCartMutation } from "@/client/api/backend-api"
 import { extractErrorMessage } from "@/lib/error"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
+import { getProductStockLabel } from "@/lib/product-display"
 import { ProductDetail } from "@/types/product/productDeteilType"
 
 type ProductDetailPurchaseCardProps = {
   product: ProductDetail
-}
-
-function getStockLabel(stock: number) {
-  if (stock > 0) return `Còn ${stock} sản phẩm`
-  return "Hết hàng"
 }
 
 export default function ProductDetailPurchaseCard({
@@ -75,7 +71,7 @@ export default function ProductDetailPurchaseCard({
         <div className="surface-secondary grid gap-3 p-4 text-sm text-slate-600">
           <div className="flex items-center justify-between gap-4">
             <span>Tình trạng</span>
-            <span className="font-semibold text-slate-950">{getStockLabel(product.stock)}</span>
+            <span className="font-semibold text-slate-950">{getProductStockLabel(product.stock)}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
             <span>Mã sản phẩm</span>

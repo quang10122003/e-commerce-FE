@@ -14,7 +14,8 @@ import Container from "@/components/shared/Container"
 import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { closeCartSidebar, openCartSidebar } from "@/features/cart/cartSidebarSlice"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
+import { getCurrentBrowserRoute } from "@/lib/navigation"
 import { useNotification } from "../ui/NotificationProvider"
 
 type NavItem = {
@@ -31,6 +32,7 @@ type UserMenuItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/products", matchPath: "/products", label: "Sản phẩm" },
   { href: "/order", matchPath: "/order", label: "Đơn hàng" },
+  { href: "/chat", matchPath: "/chat", label: "Chat" },
 ]
 
 const USER_MENU_ITEMS: UserMenuItem[] = [
@@ -147,16 +149,8 @@ export default function Navbar() {
     setIsMobileUserMenuOpen(false)
   }
 
-  function getCurrentRoute() {
-    if (typeof window === "undefined") {
-      return pathname
-    }
-
-    return `${window.location.pathname}${window.location.search}${window.location.hash}`
-  }
-
   function handleOpenLogin() {
-    pushPendingRedirectUrl(getCurrentRoute())
+    pushPendingRedirectUrl(getCurrentBrowserRoute(pathname))
     dispatch(openLogin())
   }
 
@@ -223,7 +217,7 @@ export default function Navbar() {
             </ul>
           </div>
 
-          <div className="order-3 flex w-full items-center gap-3 sm:order-none sm:flex-1 lg:w-auto lg:max-w-xl">
+          <div className="order-3 flex w-full items-center gap-3 sm:order-0 sm:flex-1 lg:w-auto lg:max-w-xl">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <Input
