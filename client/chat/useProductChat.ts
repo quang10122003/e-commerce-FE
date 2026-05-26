@@ -1,100 +1,98 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 
 import {
   useCreateChatRoomMutation,
-  useLazyGetChatRoomMessagesQuery,
   useLazyGetProductChatRoomQuery,
 } from "@/client/api/backend-api"
-import { useChatRoomSocket } from "@/client/chat/useChatRoomSocket"
+import { isNotFoundError } from "@/client/chat/chat-state"
+import { useChatRoom } from "@/client/chat/useChatRoom"
 import { extractErrorMessage } from "@/lib/error"
-import { ChatMessage, ChatRoom } from "@/types/chat/chat"
+import type { ChatRoom } from "@/types/chat/chat"
 
 type UseProductChatOptions = {
+  isOpen: boolean
   onError: (message: string) => void
   productId: number
 }
 
-function isNotFoundError(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    (error as { status?: unknown }).status === 404
-  )
-}
-
-function appendUniqueMessage(currentMessages: ChatMessage[], message: ChatMessage) {
-  if (currentMessages.some((currentMessage) => currentMessage.id === message.id)) {
-    return currentMessages
-  }
-
-  return [...currentMessages, message]
-}
-
-export function useProductChat({ onError, productId }: UseProductChatOptions) {
- // Lưu tạm message trong lúc room/socket chưa sẵn sàng để gửi realtime.
-  const pendingMessageRef = useRef<string | null>(null)
-  // state lưu room hiện tại 
-  const [room, setRoom] = useState<ChatRoom | null>(null)
-  // danh sách các tin nhắn của room 
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-
-  // lấy  room của user với sản phẩm 
+// Hook riêng cho widget sản phẩm: tìm/tạo room theo productId rồi dùng useChatRoom bên dưới.
+export function useProductChat({ isOpen, onError, productId }: UseProductChatOptions) {
+  // initialRoom/roomId được set sau khi backend xác nhận room của sản phẩm.
+  const [initialRoom, setInitialRoom] = useState<ChatRoom | null>(null)
+  const [roomId, setRoomId] = useState<number | null>(null)
   const [getProductChatRoom, { isFetching: isCheckingRoom }] = useLazyGetProductChatRoomQuery()
-
-  // lấy tn của room
-  const [getChatRoomMessages, { isFetching: isFetchingMessages }] = useLazyGetChatRoomMessagesQuery()
-// tạo room 
   const [createChatRoom, { isLoading: isCreatingRoom }] = useCreateChatRoomMutation()
 
-  // Thêm message vào list nếu message chưa tồn tại
-  const handleSocketMessage = useCallback((nextMessage: ChatMessage) => {
-    setMessages((currentMessages) => appendUniqueMessage(currentMessages, nextMessage))
-  }, [])
-
-  // kết nối wedsocket kèm theo đăng ký nắng nghe sự kiện từ topic và add tin nhắn mới vào state messages
-  const { sendMessage, status } = useChatRoomSocket({
-    onMessage: handleSocketMessage,
-    roomId: room?.id ?? null,
+  const chatRoom = useChatRoom({
+    active: isOpen,
+    initialRoom,
+    onError,
+    roomId,
   })
+  const {
+    isBusy,
+    loadRoomMessages,
+    messages,
+    openRoom,
+    room,
+    setRoom,
+    socketStatus,
+    submitMessage: submitRoomMessage,
+  } = chatRoom
 
-
-  // lâys tin nhắn từ room
-  const loadRoomMessages = useCallback(
-    async (roomId: number) => {
-      const response = await getChatRoomMessages(roomId).unwrap()
-
-      if (response.success && response.data) {
-        setMessages(response.data)
-      }
+  // Đồng bộ room vừa lấy/tạo vào cả wrapper và hook room lõi.
+  const setResolvedRoom = useCallback(
+    (nextRoom: ChatRoom) => {
+      setInitialRoom(nextRoom)
+      setRoomId(nextRoom.id)
+      setRoom(nextRoom)
     },
-    [getChatRoomMessages]
+    [setRoom]
   )
 
-  const openChat = useCallback(async () => {
-    if (room) {
+  // Lấy room trước khi mở widget để hiển thị badge unread realtime.
+  const checkChatRoom = useCallback(async () => {
+    if (room || roomId) {
       return
     }
 
     try {
-      // lấy room
       const response = await getProductChatRoom(productId).unwrap()
 
-      // nếu có room thì load tin nhắn
       if (response.success && response.data) {
-        setRoom(response.data)
-        await loadRoomMessages(response.data.id)
+        setResolvedRoom(response.data)
       }
     } catch (error) {
-      // nếu trả về lỗi khác k tìm thấy room thì bắn thông báo
       if (!isNotFoundError(error)) {
         onError(extractErrorMessage(error))
       }
     }
-  }, [getProductChatRoom, loadRoomMessages, onError, productId, room])
+  }, [getProductChatRoom, onError, productId, room, roomId, setResolvedRoom])
 
+  // Mở widget: lấy room nếu cần, load messages và mark-read.
+  const openChat = useCallback(async () => {
+    if (room) {
+      await openRoom(room)
+      return
+    }
+
+    try {
+      const response = await getProductChatRoom(productId).unwrap()
+
+      if (response.success && response.data) {
+        setResolvedRoom(response.data)
+        await openRoom(response.data)
+      }
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        onError(extractErrorMessage(error))
+      }
+    }
+  }, [getProductChatRoom, onError, openRoom, productId, room, setResolvedRoom])
+
+  // Gửi tin từ widget; nếu chưa có room thì tạo room trước.
   const submitMessage = useCallback(
     async (content: string) => {
       const trimmedContent = content.trim()
@@ -104,15 +102,9 @@ export function useProductChat({ onError, productId }: UseProductChatOptions) {
       }
 
       if (room) {
-        // chưa connect wedsocket 
-        if (!sendMessage(trimmedContent)) {
-          pendingMessageRef.current = trimmedContent
-        }
-
-        return true
+        return submitRoomMessage(trimmedContent)
       }
 
-      // tạo room nếu chưa có room 
       try {
         const response = await createChatRoom(productId).unwrap()
 
@@ -120,39 +112,24 @@ export function useProductChat({ onError, productId }: UseProductChatOptions) {
           return false
         }
 
-        pendingMessageRef.current = trimmedContent
-        setRoom(response.data)
-
+        setResolvedRoom(response.data)
         await loadRoomMessages(response.data.id)
-
-        return true
+        return submitRoomMessage(trimmedContent, response.data)
       } catch (error) {
         onError(extractErrorMessage(error))
         return false
       }
     },
-    [createChatRoom, loadRoomMessages, onError, productId, room, sendMessage]
+    [createChatRoom, loadRoomMessages, onError, productId, room, setResolvedRoom, submitRoomMessage]
   )
 
-  useEffect(() => {
-    if (status !== "connected" || !pendingMessageRef.current) {
-      return
-    }
-
-    const pendingMessage = pendingMessageRef.current
-
-    // gửi tin nhắn
-    if (sendMessage(pendingMessage)) {
-      pendingMessageRef.current = null
-    }
-  }, [sendMessage, status])
-
   return {
-    isBusy: isCheckingRoom || isCreatingRoom || isFetchingMessages,
+    checkChatRoom,
+    isBusy: isCheckingRoom || isCreatingRoom || isBusy,
     messages,
     openChat,
     room,
-    socketStatus: status,
+    socketStatus,
     submitMessage,
   }
 }

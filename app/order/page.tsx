@@ -37,12 +37,18 @@ async function getOrderInitialData(refreshRedirectPath: string) {
 }
 
 export default async function OrderPage({ searchParams }: OrderPageProps) {
+  // Next 16 truyền searchParams dạng Promise trong Server Component.
   const params = await searchParams
+  // Query status chỉ ảnh hưởng UI lọc đơn hàng phía client.
   const selectedStatus = parseSelectedOrderStatus(params)
+  // Ghi nhớ URL hiện tại để refresh auth quay lại đúng bộ lọc đang xem.
   const refreshRedirectPath = buildInternalPathWithSearchParams("/order", params)
+  // Marker này cho biết request hiện tại vừa quay về từ route refresh auth.
   const hasRefreshMarker = readSearchParam(params[AUTH_REFRESHED_SEARCH_PARAM]) === "1"
+  // Dữ liệu đơn hàng được lấy ở server rồi truyền xuống client component để render/tương tác.
   const { errorMessage, orders } = await getOrderInitialData(refreshRedirectPath)
 
+  // Refresh auth thành công thì xóa marker khỏi URL.
   if (!errorMessage && hasRefreshMarker) {
     redirect(stripAuthRefreshMarker(refreshRedirectPath))
   }

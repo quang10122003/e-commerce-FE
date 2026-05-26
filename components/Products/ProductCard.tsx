@@ -38,10 +38,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         variant: "success",
       })
     } catch (error) {
-      const errMsg = extractErrorMessage(error)
-      showNotification(errMsg, {
-        variant: "error",
-      })
+      // const errMsg = extractErrorMessage(error)
+      // showNotification(errMsg, {
+      //   variant: "error",
+      // })
+      console.log(error)
     }
   }
 

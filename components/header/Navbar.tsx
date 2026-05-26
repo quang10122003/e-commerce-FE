@@ -73,7 +73,8 @@ export default function Navbar() {
   const { data: cartData } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
   })
-  const cartTotalQuantity = cartData?.data?.totalQuantity ?? 0
+  // Khong hien so gio hang khi client da mat auth.
+  const cartTotalQuantity = isAuthenticated ? cartData?.data?.totalQuantity ?? 0 : 0
 
   const [requestCart, { isFetching: isCartSidebarLoading }] = useLazyGetCartQuery()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)

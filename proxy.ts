@@ -7,7 +7,7 @@ import {
   REFRESH_TOKEN_COOKIE_KEY,
 } from "@/server/auth-constants"
 
-const PROTECTED_ROUTES = ["/cart", "/order"]
+const PROTECTED_ROUTES = ["/cart", "/order", "/chat"]
 
 // Kiểm tra page được request có cần auth session không.
 function isProtectedRoute(pathname: string) {
@@ -42,5 +42,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/cart/:path*", "/order/:path*"],
+  matcher: ["/cart/:path*", "/order/:path*", "/chat/:path*"],
 }

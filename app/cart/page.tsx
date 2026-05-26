@@ -34,10 +34,13 @@ async function getCartInitialData(refreshRedirectPath: string) {
 }
 
 export default async function Page({ searchParams }: CartPageProps) {
+  // Next 16 truyền searchParams dạng Promise trong Server Component.
   const params = await searchParams
+  // Marker này cho biết request hiện tại vừa quay về từ route refresh auth.
   const hasRefreshMarker = readSearchParam(params[AUTH_REFRESHED_SEARCH_PARAM]) === "1"
   // Đường dẫn để route refresh quay lại đúng page này.
   const refreshRedirectPath = hasRefreshMarker ? `/cart?${AUTH_REFRESHED_SEARCH_PARAM}=1` : "/cart"
+  // Dữ liệu giỏ hàng được lấy ở server rồi truyền xuống client component để render/tương tác.
   const { cartData, errorMessage } = await getCartInitialData(refreshRedirectPath)
 
   // Xóa marker làm mới dùng một lần sau khi dữ liệu tải xong.

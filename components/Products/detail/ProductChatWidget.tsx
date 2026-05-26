@@ -1,12 +1,16 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { MessageCircle, Send, X } from "lucide-react"
 
+import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import { useProductChat } from "@/client/chat/useProductChat"
+import { openLogin } from "@/client/session/loginModalSlice"
+import { pushPendingRedirectUrl } from "@/client/session/redirect-stack"
 import CardChatProduct from "@/components/Products/detail/CardChatProduct"
 import { useNotification } from "@/components/ui/NotificationProvider"
 import { formatCurrency } from "@/lib/format"
+import { getCurrentBrowserRoute } from "@/lib/navigation"
 import { ProductDetail } from "@/types/product/productDeteilType"
 
 type ProductChatWidgetProps = {
@@ -14,21 +18,40 @@ type ProductChatWidgetProps = {
 }
 
 export default function ProductChatWidget({ product }: ProductChatWidgetProps) {
+  const dispatch = useAppDispatch()
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   // state mở popup chat
   const [isOpen, setIsOpen] = useState(false)
   // state quản lý nội dung nhập
   const [message, setMessage] = useState("")
 
   const { showNotification } = useNotification()
-
-  const { isBusy, messages, openChat, socketStatus, submitMessage ,room} = useProductChat({
-    onError: (errorMessage) => {
+  // Giữ callback báo lỗi ổn định giữa các lần render.
+  // Nếu truyền trực tiếp arrow function vào hook, dependency trong useProductChat có thể đổi liên tục.
+  const handleChatError = useCallback(
+    (errorMessage: string) => {
       showNotification(errorMessage, {
         variant: "error",
       })
     },
+    [showNotification]
+  )
+
+  const { isBusy, messages, openChat, socketStatus, submitMessage ,room,checkChatRoom} = useProductChat({
+    isOpen,
+    onError: handleChatError,
     productId: product.id,
   })
+  // lấy room để render số tin nhắn chưa đọc trong wiget 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    void checkChatRoom()
+  }, [checkChatRoom, isAuthenticated])
+  
+  const unreadCount = room?.unreadCount ?? 0
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault()
@@ -43,6 +66,13 @@ export default function ProductChatWidget({ product }: ProductChatWidgetProps) {
   const handleOpenChat = () => {
     if (isOpen) {
       setIsOpen(false)
+      return
+    }
+
+    if (!isAuthenticated) {
+      // Chưa đăng nhập thì chỉ mở form login, không mở chi tiết chat.
+      pushPendingRedirectUrl(getCurrentBrowserRoute())
+      dispatch(openLogin())
       return
     }
 
@@ -130,7 +160,7 @@ export default function ProductChatWidget({ product }: ProductChatWidgetProps) {
         aria-expanded={isOpen}
         aria-label={isOpen ? "Thu gon chat ho tro" : "Mo chat ho tro"}
         className={[
-          "inline-flex items-center gap-2 rounded-full bg-[#ee4d2d] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(238,77,45,0.32)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#d94326] focus:outline-none focus:ring-4 focus:ring-[#f8b4a3]",
+          "relative inline-flex items-center gap-2 rounded-full bg-[#ee4d2d] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(238,77,45,0.32)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#d94326] focus:outline-none focus:ring-4 focus:ring-[#f8b4a3]",
           isOpen ? "ring-4 ring-[#f8b4a3]/70" : "",
         ].join(" ")}
         onClick={handleOpenChat}
@@ -138,6 +168,11 @@ export default function ProductChatWidget({ product }: ProductChatWidgetProps) {
       >
         <MessageCircle className="size-5" aria-hidden="true" />
         <span>Chat</span>
+        {!isOpen && unreadCount > 0 ? (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold leading-none text-white ring-2 ring-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        ) : null}
       </button>
     </div>
   )

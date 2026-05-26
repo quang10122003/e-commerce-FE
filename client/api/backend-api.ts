@@ -65,9 +65,13 @@ const backendBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
 
   if (result.error?.status === 401) {
     clearAuthenticatedUser(api.dispatch)
+    // Xoa cache API cu de UI khong hien gio hang/don hang stale.
+    api.dispatch(backendApi.util.resetApiState())
 
     if (api.endpoint !== "getMe" && api.endpoint !== "logout") {
+      // nhớ lại url để khi đăng nhập lại chuyển hướng trang
       pushPendingRedirectUrl(getCurrentBrowserRoute())
+
       api.dispatch(openLogin())
     }
   }
@@ -148,15 +152,29 @@ export const backendApi = createApi({
         url: `/chat/rooms/${productId}`,
       }),
     }),
+    getChatRooms: builder.query<ApiResponseType<ChatRoom[]>, void>({
+      providesTags: ["ChatRooms"],
+      query: () => ({
+        method: "GET",
+        url: "/chat/rooms",
+      }),
+    }),
     getChatRoomMessages: builder.query<ApiResponseType<ChatMessage[]>, number>({
       query: (roomId) => ({
         method: "GET",
         url: `/chat/rooms/${roomId}/messages`,
       }),
     }),
+    markChatRoomAsRead: builder.mutation<ApiResponseType<ChatRoom>, number>({
+      invalidatesTags: ["ChatRooms"],
+      query: (roomId) => ({
+        method: "POST",
+        url: `/chat/rooms/${roomId}/read`,
+      }),
+    })
   }),
   reducerPath: "backendApi",
-  tagTypes: ["Auth", "Cart", "Orders"],
+  tagTypes: ["Auth", "Cart", "Orders", "ChatRooms"],
 })
 
 export const {
@@ -172,5 +190,7 @@ export const {
   useCreateWsTicketMutation,
   useCreateChatRoomMutation,
   useLazyGetProductChatRoomQuery,
+  useLazyGetChatRoomsQuery,
   useLazyGetChatRoomMessagesQuery,
+  useMarkChatRoomAsReadMutation
 } = backendApi

@@ -62,3 +62,10 @@ export interface ChatMessage {
 
     createdAt: string;
 }
+
+export interface ChatReadReceipt {
+    roomId: number;
+    readerId: number | null;
+    messageIds: number[];
+    readAt?: string;
+}
