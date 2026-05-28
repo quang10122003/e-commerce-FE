@@ -50,7 +50,7 @@ export default async function Page({ searchParams }: ProductsPageProps) {
   const { categories, productsPage } = await getProductsInitialData(filters)
   const totalPages = Math.max(productsPage.data?.totalPages ?? 0, 0)
 
-  // Keep the URL canonical when the requested page is beyond the backend result.
+  // Giữ URL chuẩn khi page được yêu cầu vượt quá kết quả backend trả về.
   if (totalPages > 0 && filters.currentPage > totalPages) {
     redirect(buildProductsPageHref({ filters, page: totalPages }))
   }

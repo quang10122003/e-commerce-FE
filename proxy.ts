@@ -8,6 +8,7 @@ import {
 } from "@/server/auth-constants"
 
 const PROTECTED_ROUTES = ["/cart", "/order", "/chat"]
+const ResetPathName = "/reset-password"
 
 // Kiểm tra page được request có cần auth session không.
 function isProtectedRoute(pathname: string) {
@@ -24,8 +25,28 @@ function redirectToLoginIntent(request: NextRequest) {
   return NextResponse.redirect(loginUrl)
 }
 
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+// check reset mk có tokne reset hay ko nếu ko thì 
+function checkResetPassword(
+  pathname: string,
+  searchParams: URLSearchParams,
+  request: NextRequest
+) {
+  const token = searchParams.get("token")
+
+  if (pathname === ResetPathName && !token) {
+    return NextResponse.redirect(new URL("/?auth=login", request.url))
+  }
+
+  return NextResponse.next()
+}
+
+export function proxy(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl
+
+  const resetCheck = checkResetPassword(pathname, searchParams, request)
+  if (resetCheck instanceof NextResponse) {
+    return resetCheck
+  }
 
   if (!isProtectedRoute(pathname)) {
     return NextResponse.next()
@@ -42,5 +63,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/cart/:path*", "/order/:path*", "/chat/:path*"],
+  matcher: ["/cart/:path*", "/order/:path*", "/chat/:path*","/reset-password/:path*"]
 }

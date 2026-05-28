@@ -6,12 +6,12 @@ import cartSidebarReducer from "@/features/cart/cartSidebarSlice"
 
 export const store = configureStore({
     reducer: {
-        // Global UI State
+        // Trạng thái UI dùng chung
         login: loginReducer,
         auth: authReducer,
         cartSidebar: cartSidebarReducer,
 
-        // Browser mutations and live widgets go through the Next API proxy.
+        // Các thao tác phía trình duyệt và widget realtime đi qua API proxy của Next.
         [backendApi.reducerPath]: backendApi.reducer
     },
     middleware: (getDefaultMiddleware) =>

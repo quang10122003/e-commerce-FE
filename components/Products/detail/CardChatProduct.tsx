@@ -37,11 +37,11 @@ export default function CardChatProduct({
   const prevMessageCountRef = useRef(messages.length)
 
   // showScrollButton: hiển thị nút "Tin nhắn mới" khi người dùng cuộn lên trên
-  // newMessageCount: badge đếm số tin nhắn đến chưa đọc
+  // newMessageCount: huy hiệu đếm số tin nhắn đến chưa đọc
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [newMessageCount, setNewMessageCount] = useState(0)
 
-  // ─── Helpers ────────────────────────────────────────────────────────────────
+  // ─── Hàm hỗ trợ ─────────────────────────────────────────────────────────────
 
   /** Kiểm tra container hiện có đang ở vị trí cuối không */
   const checkIsAtBottom = useCallback(() => {
@@ -55,7 +55,7 @@ export default function CardChatProduct({
     bottomRef.current?.scrollIntoView({ behavior, block: "nearest" })
   }, [])
 
-  // ─── Event handlers ─────────────────────────────────────────────────────────
+  // ─── Bộ xử lý sự kiện ────────────────────────────────────────────────────────
 
   /**
    * Xử lý sự kiện scroll:
@@ -86,7 +86,7 @@ export default function CardChatProduct({
     setNewMessageCount(0)
   }, [scrollToBottom])
 
-  // ─── Effects ─────────────────────────────────────────────────────────────────
+  // ─── Effect ──────────────────────────────────────────────────────────────────
 
   /**
    * Scroll xuống cuối mỗi khi popup được mở lại.
@@ -191,7 +191,7 @@ export default function CardChatProduct({
           })
         )}
 
-        {/* Anchor element — scrollIntoView sẽ nhắm vào đây */}
+        {/* Phần tử mốc — scrollIntoView sẽ nhắm vào đây */}
         <div ref={bottomRef} />
       </div>
 
@@ -201,7 +201,7 @@ export default function CardChatProduct({
           onClick={handleScrollButtonClick}
           className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-md ring-1 ring-slate-200 transition hover:bg-slate-50 active:scale-95"
         >
-          {/* Badge đếm số tin chưa đọc — chỉ hiện khi có tin mới */}
+          {/* Huy hiệu đếm số tin chưa đọc — chỉ hiện khi có tin mới */}
           {newMessageCount > 0 && (
             <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] text-white">
               {newMessageCount > 99 ? "99+" : newMessageCount}

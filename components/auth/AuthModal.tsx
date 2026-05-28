@@ -1,12 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { X } from "lucide-react"
+import { X, CheckCircle2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { RegisterOptions, useForm, useWatch } from "react-hook-form"
+import { Turnstile } from "@marsidev/react-turnstile"
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
-import { backendApi, useLoginMutation, useSignupMutation } from "@/client/api/backend-api"
+import {
+  backendApi,
+  useForgotPasswordMutation,
+  useLoginMutation,
+  useSignupMutation,
+} from "@/client/api/backend-api"
 import { closeLogin } from "@/client/session/loginModalSlice"
 import {
   clearPendingRedirectUrls,
@@ -19,13 +25,22 @@ import { useNotification } from "@/components/ui/NotificationProvider"
 import { cn } from "@/lib/cn"
 import { getApiResponseMessage } from "@/lib/error"
 
-type AuthMode = "login" | "register"
+// ─── Types ────────────────────────────────────────────────────────────────────
 
+/** 3 trạng thái giao diện của modal */
+type AuthMode = "login" | "register" | "forgot"
+
+/** Giá trị form dùng chung cho login & register */
 type AuthFormValues = {
   fullName: string
   email: string
   password: string
   confirmPassword: string
+}
+
+/** Giá trị form riêng cho quên mật khẩu */
+type ForgotFormValues = {
+  email: string
 }
 
 type FieldName = keyof AuthFormValues
@@ -37,20 +52,33 @@ type FieldConfig = {
   type?: "text" | "email" | "password"
 }
 
+// ─── Hằng số copy text theo từng mode ─────────────────────────────────────────
+
 const FORM_COPY = {
   login: {
-    submitLabel: "Đăng nhập",
-    switchActionLabel: "Đăng ký",
-    switchText: "Chưa có tài khoản?",
     title: "Đăng nhập",
+    subtitle: "Đăng nhập hoặc tạo tài khoản để tiếp tục trải nghiệm mua sắm.",
+    submitLabel: "Đăng nhập",
+    switchText: "Chưa có tài khoản?",
+    switchActionLabel: "Đăng ký",
   },
   register: {
-    submitLabel: "Đăng ký",
-    switchActionLabel: "Đăng nhập",
-    switchText: "Đã có tài khoản?",
     title: "Tạo tài khoản mới",
+    subtitle: "Đăng nhập hoặc tạo tài khoản để tiếp tục trải nghiệm mua sắm.",
+    submitLabel: "Đăng ký",
+    switchText: "Đã có tài khoản?",
+    switchActionLabel: "Đăng nhập",
+  },
+  forgot: {
+    title: "Quên mật khẩu",
+    subtitle: "Nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.",
+    submitLabel: "Gửi yêu cầu",
+    switchText: "Nhớ mật khẩu rồi?",
+    switchActionLabel: "Đăng nhập",
   },
 }
+
+// ─── Cấu hình fields ───────────────────────────────────────────────────────────
 
 const LOGIN_FIELDS: FieldConfig[] = [
   { name: "email", label: "Email", type: "email", placeholder: "Nhập email" },
@@ -68,16 +96,47 @@ const REGISTER_FIELDS: FieldConfig[] = [
   },
 ]
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function AuthModal() {
   const dispatch = useAppDispatch()
   const router = useRouter()
+
+  /** Trạng thái mở/đóng modal từ Redux */
   const isOpen = useAppSelector((state) => state.login.isOpen)
+
+  /** Trạng thái giao diện hiện tại: login | register | forgot */
   const [mode, setMode] = useState<AuthMode>("login")
+
+  /** Token captcha Cloudflare Turnstile (chỉ dùng ở màn forgot) */
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+
+  /** Hiển thị màn hình thành công sau khi gửi email quên mật khẩu */
+  const [forgotSuccess, setForgotSuccess] = useState(false)
+
+  // ─── RTK Query mutations ───────────────────────────────────────────────────
+
   const [login, { isLoading: isLoginLoading }] = useLoginMutation()
   const [signup, { isLoading: isSignupLoading }] = useSignupMutation()
+  const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation()
+
   const { showNotification } = useNotification()
+
+  // ─── Derived state ─────────────────────────────────────────────────────────
+
   const isRegisterMode = mode === "register"
-  const isSubmitting = isLoginLoading || isSignupLoading
+  const isForgotMode = mode === "forgot"
+  const isLoginMode = mode === "login"
+
+  /** Đang submit form login hoặc register */
+  const isAuthSubmitting = isLoginLoading || isSignupLoading
+
+  const formCopy = FORM_COPY[mode]
+
+  /** Danh sách fields hiển thị tuỳ theo mode */
+  const fields = isRegisterMode ? REGISTER_FIELDS : LOGIN_FIELDS
+
+  // ─── Form: Login / Register ────────────────────────────────────────────────
 
   const {
     register,
@@ -97,17 +156,30 @@ export default function AuthModal() {
     },
   })
 
-  const password = useWatch({
-    control,
-    name: "password",
+  /** Theo dõi giá trị password để validate confirmPassword */
+  const password = useWatch({ control, name: "password" })
+
+  // ─── Form: Forgot Password ─────────────────────────────────────────────────
+
+  const {
+    register: registerForgot,
+    handleSubmit: handleSubmitForgot,
+    reset: resetForgot,
+    clearErrors: clearForgotErrors,
+    setError: setForgotError,
+    formState: { errors: forgotErrors },
+  } = useForm<ForgotFormValues>({
+    mode: "onTouched",
+    defaultValues: { email: "" },
   })
-  const formCopy = FORM_COPY[mode]
-  const fields = isRegisterMode ? REGISTER_FIELDS : LOGIN_FIELDS
 
-  if (!isOpen) {
-    return null
-  }
+  // ─── Guard: không render khi modal đóng ───────────────────────────────────
 
+  if (!isOpen) return null
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  /** Trả về validation rules cho từng field của form login/register */
   function getFieldRules(name: FieldName): RegisterOptions<AuthFormValues, FieldName> {
     switch (name) {
       case "fullName":
@@ -119,11 +191,11 @@ export default function AuthModal() {
       case "email":
         return {
           onChange: () => clearErrors("root"),
+          required: "Vui lòng nhập email.",
           pattern: {
             value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
             message: "Email không đúng định dạng.",
           },
-          required: "Vui lòng nhập email.",
         }
       case "password":
         return {
@@ -134,51 +206,57 @@ export default function AuthModal() {
         return {
           onChange: () => clearErrors("root"),
           validate: (value) => {
-            if (!isRegisterMode) {
-              return true
-            }
-
-            if (!value) {
-              return "Vui lòng nhập lại mật khẩu."
-            }
-
+            if (!isRegisterMode) return true
+            if (!value) return "Vui lòng nhập lại mật khẩu."
             return value === password ? true : "Mật khẩu nhập lại không khớp."
           },
         }
     }
   }
 
+  /** Reset toàn bộ form state và chuyển sang mode mới */
   function resetFormState(nextMode: AuthMode = "login") {
     setMode(nextMode)
     reset()
+    resetForgot()
     clearErrors()
+    clearForgotErrors()
+    setCaptchaToken(null)
+    setForgotSuccess(false)
   }
 
+  /** Đóng modal và xoá redirect stack */
   function handleCloseModal() {
     resetFormState()
     clearPendingRedirectUrls()
     dispatch(closeLogin())
   }
 
-  async function handleSubmitForm(data: AuthFormValues) {
+  // ─── Submit handlers ───────────────────────────────────────────────────────
+
+  /** Xử lý submit form login / register */
+  async function handleSubmitAuthForm(data: AuthFormValues) {
     try {
       clearErrors("root")
 
+      // Gọi API login hoặc signup tuỳ mode
       const response = isRegisterMode
         ? await signup({
-            email: data.email,
-            fullName: data.fullName,
-            password: data.password,
-          }).unwrap()
+          email: data.email,
+          fullName: data.fullName,
+          password: data.password,
+        }).unwrap()
         : await login({
-            email: data.email,
-            password: data.password,
-          }).unwrap()
+          email: data.email,
+          password: data.password,
+        }).unwrap()
 
+      // response.data có thể null theo ApiResponseType — throw để rơi vào catch
       if (!response.data) {
         throw new Error("Auth response is missing data.")
       }
 
+      // Lưu thông tin user vào Redux session
       setAuthenticatedUser(dispatch, {
         userId: response.data.userId,
         email: response.data.email,
@@ -191,7 +269,6 @@ export default function AuthModal() {
       })
 
       const redirectUrl = popPendingRedirectUrl()
-
       dispatch(backendApi.util.resetApiState())
       handleCloseModal()
 
@@ -205,13 +282,52 @@ export default function AuthModal() {
           typeof error === "object" && error !== null && "data" in error
             ? (error as { data?: unknown }).data
             : null,
-          "Khong the xu ly yeu cau. Vui long thu lai."
+          "Không thể xử lý yêu cầu. Vui lòng thử lại."
         ),
       })
     }
   }
 
-  function renderField({ name, label, placeholder, type = "text" }: FieldConfig) {
+  /** Xử lý submit form quên mật khẩu */
+  async function handleSubmitForgotForm(data: ForgotFormValues) {
+    // Bắt buộc phải xác minh captcha trước khi gửi
+    if (!captchaToken) {
+      setForgotError("root", {
+        type: "manual",
+        message: "Vui lòng xác minh captcha.",
+      })
+      return
+    }
+
+    try {
+      clearForgotErrors("root")
+
+      // Gọi API quên mật khẩu — unwrap() sẽ tự throw nếu lỗi HTTP
+      await forgotPassword({
+        email: data.email,
+        captchaToken,
+      }).unwrap()
+
+      // Không check response.data vì forgot password không trả data,
+      // chỉ cần unwrap() không throw là thành công
+      setForgotSuccess(true)
+    } catch (error) {
+      setForgotError("root", {
+        type: "server",
+        message: getApiResponseMessage(
+          typeof error === "object" && error !== null && "data" in error
+            ? (error as { data?: unknown }).data
+            : null,
+          "Không thể xử lý yêu cầu. Vui lòng thử lại."
+        ),
+      })
+    }
+  }
+
+  // ─── Render helpers ────────────────────────────────────────────────────────
+
+  /** Render một field input cho form login/register */
+  function renderAuthField({ name, label, placeholder, type = "text" }: FieldConfig) {
     const error = errors[name]
     const errorId = `${name}-error`
 
@@ -224,7 +340,9 @@ export default function AuthModal() {
           id={name}
           type={type}
           placeholder={placeholder}
-          className={cn(error && "border-[#efb4b4] focus-visible:border-[#dc2626] focus-visible:ring-[#fecaca]")}
+          className={cn(
+            error && "border-[#efb4b4] focus-visible:border-[#dc2626] focus-visible:ring-[#fecaca]"
+          )}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
           {...register(name, getFieldRules(name))}
@@ -238,8 +356,163 @@ export default function AuthModal() {
     )
   }
 
+  // ─── Giao diện: Màn hình thành công sau khi gửi email ─────────────────────
+
+  function renderForgotSuccess() {
+    return (
+      <div className="flex flex-col items-center gap-4 py-4 text-center">
+        {/* Icon check xanh */}
+        <CheckCircle2 className="size-14 text-emerald-500" strokeWidth={1.5} />
+
+        {/* Thông báo thành công */}
+        <div className="space-y-1">
+          <p className="font-semibold text-slate-800">Yêu cầu đã được gửi!</p>
+          <p className="text-sm text-slate-500">
+            Vui lòng kiểm tra hộp thư email để đặt lại mật khẩu.
+          </p>
+        </div>
+
+        {/* Nút quay lại đăng nhập */}
+        <MainButton
+          type="button"
+          className="mt-2 h-12 w-full"
+          onClick={() => resetFormState("login")}
+        >
+          Quay lại đăng nhập
+        </MainButton>
+      </div>
+    )
+  }
+
+  // ─── Giao diện: Form quên mật khẩu ────────────────────────────────────────
+
+  function renderForgotForm() {
+    return (
+      <form
+        className="grid gap-4"
+        onSubmit={handleSubmitForgot(handleSubmitForgotForm)}
+        noValidate
+      >
+        {/* Field: Email */}
+        <div className="grid gap-2">
+          <label htmlFor="forgot-email" className="text-sm font-semibold text-slate-700">
+            Email
+          </label>
+          <Input
+            id="forgot-email"
+            type="email"
+            placeholder="Nhập email đã đăng ký"
+            className={cn(
+              forgotErrors.email &&
+              "border-[#efb4b4] focus-visible:border-[#dc2626] focus-visible:ring-[#fecaca]"
+            )}
+            aria-invalid={Boolean(forgotErrors.email)}
+            aria-describedby={forgotErrors.email ? "forgot-email-error" : undefined}
+            {...registerForgot("email", {
+              onChange: () => clearForgotErrors("root"),
+              required: "Vui lòng nhập email.",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Email không đúng định dạng.",
+              },
+            })}
+          />
+          {forgotErrors.email?.message ? (
+            <p id="forgot-email-error" className="text-sm leading-6 text-[#b42318]">
+              {forgotErrors.email.message}
+            </p>
+          ) : null}
+        </div>
+
+        {/* Captcha Cloudflare Turnstile */}
+        <div>
+          <Turnstile
+            siteKey={process.env.NEXT_PUBLIC_SITE_KEY_CLOUDFLARE_TURNSTILE!}
+            onSuccess={(token) => {
+              setCaptchaToken(token)
+            }}
+          />
+        </div>
+
+        {/* Lỗi server — hiển thị trên nút submit */}
+        {forgotErrors.root?.message ? (
+          <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm leading-6 text-[#b42318]">
+            {forgotErrors.root.message}
+          </p>
+        ) : null}
+
+        {/* Nút submit */}
+        <MainButton type="submit" className="mt-1 h-12" disabled={isForgotLoading} fullWidth>
+          {isForgotLoading ? "Đang gửi..." : formCopy.submitLabel}
+        </MainButton>
+
+        {/* Chuyển về đăng nhập */}
+        <div className="flex flex-wrap items-center justify-center gap-1 text-sm text-slate-500">
+          <span>{formCopy.switchText}</span>
+          <button
+            type="button"
+            className="font-semibold text-primary transition hover:brightness-110"
+            onClick={() => resetFormState("login")}
+          >
+            {formCopy.switchActionLabel}
+          </button>
+        </div>
+      </form>
+    )
+  }
+
+  // ─── Giao diện: Form login / register ─────────────────────────────────────
+
+  function renderAuthForm() {
+    return (
+      <form className="grid gap-4" onSubmit={handleSubmit(handleSubmitAuthForm)} noValidate>
+        {/* Các fields tuỳ theo mode login/register */}
+        {fields.map(renderAuthField)}
+
+        {/* Lỗi server — hiển thị trên nút submit */}
+        {errors.root?.message ? (
+          <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm leading-6 text-[#b42318]">
+            {errors.root.message}
+          </p>
+        ) : null}
+
+        {/* Nút submit */}
+        <MainButton type="submit" className="mt-1 h-12" disabled={isAuthSubmitting} fullWidth>
+          {formCopy.submitLabel}
+        </MainButton>
+
+        {/* Nút quên mật khẩu — chỉ hiện ở mode login */}
+        {isLoginMode ? (
+          <button
+            type="button"
+            className="justify-self-end text-sm font-medium text-slate-500 transition hover:text-primary"
+            onClick={() => resetFormState("forgot")}
+          >
+            Quên mật khẩu?
+          </button>
+        ) : null}
+
+        {/* Chuyển giữa login / register */}
+        <div className="flex flex-wrap items-center justify-center gap-1 text-sm text-slate-500">
+          <span>{formCopy.switchText}</span>
+          <button
+            type="button"
+            className="font-semibold text-primary transition hover:brightness-110"
+            onClick={() => resetFormState(isRegisterMode ? "login" : "register")}
+          >
+            {formCopy.switchActionLabel}
+          </button>
+        </div>
+      </form>
+    )
+  }
+
+  // ─── Render chính ──────────────────────────────────────────────────────────
+
   return (
     <div className="fixed inset-0 z-200 flex items-start justify-center px-4 py-6 sm:items-center">
+
+      {/* Backdrop — click để đóng modal */}
       <button
         className="absolute inset-0 bg-slate-950/18"
         onClick={handleCloseModal}
@@ -247,17 +520,23 @@ export default function AuthModal() {
         aria-label="Đóng biểu mẫu xác thực"
       />
 
+      {/* Modal container */}
       <div className="surface-overlay relative z-10 w-full max-w-md p-6 sm:p-7">
+
+        {/* ── Header: title + nút đóng ── */}
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="space-y-2">
             <p className="section-kicker">Account</p>
             <h1 className="text-[30px] font-bold tracking-[-0.03em] text-slate-950">
               {formCopy.title}
             </h1>
-            <p className="text-sm leading-7 text-slate-600">
-              Đăng nhập hoặc tạo tài khoản để tiếp tục trải nghiệm mua sắm.
-            </p>
+            {/* Subtitle — ẩn khi màn hình thành công của forgot */}
+            {!(isForgotMode && forgotSuccess) ? (
+              <p className="text-sm leading-7 text-slate-600">{formCopy.subtitle}</p>
+            ) : null}
           </div>
+
+          {/* Nút đóng modal */}
           <button
             type="button"
             onClick={handleCloseModal}
@@ -268,39 +547,17 @@ export default function AuthModal() {
           </button>
         </div>
 
-        <form className="grid gap-4" onSubmit={handleSubmit(handleSubmitForm)} noValidate>
-          {fields.map(renderField)}
+        {/* ── Body: tuỳ theo mode ── */}
 
-          {errors.root?.message ? (
-            <p className="rounded-[12px] bg-danger-soft px-4 py-3 text-sm leading-6 text-[#b42318]">
-              {errors.root.message}
-            </p>
-          ) : null}
+        {/* Forgot: màn hình thành công */}
+        {isForgotMode && forgotSuccess ? renderForgotSuccess() : null}
 
-          <MainButton type="submit" className="mt-1 h-12" disabled={isSubmitting} fullWidth>
-            {formCopy.submitLabel}
-          </MainButton>
+        {/* Forgot: form nhập email + captcha */}
+        {isForgotMode && !forgotSuccess ? renderForgotForm() : null}
 
-          {!isRegisterMode ? (
-            <button
-              type="button"
-              className="justify-self-end text-sm font-medium text-slate-500 transition hover:text-primary"
-            >
-              Quên mật khẩu?
-            </button>
-          ) : null}
+        {/* Login / Register: form xác thực */}
+        {!isForgotMode ? renderAuthForm() : null}
 
-          <div className="flex flex-wrap items-center justify-center gap-1 text-sm text-slate-500">
-            <span>{formCopy.switchText}</span>
-            <button
-              type="button"
-              className="font-semibold text-primary transition hover:brightness-110"
-              onClick={() => resetFormState(isRegisterMode ? "login" : "register")}
-            >
-              {formCopy.switchActionLabel}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   )

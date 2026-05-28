@@ -63,7 +63,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <CardContent className="flex flex-1 flex-col gap-3 p-5">
-          {/* Badges */}
+          {/* Các nhãn trạng thái */}
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Đang mở bán

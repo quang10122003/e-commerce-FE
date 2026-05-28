@@ -122,7 +122,7 @@ export default function Navbar() {
     try {
       await logout().unwrap()
     } catch {
-      // Logout still clears local UI if the session cookie was already gone.
+      // Logout vẫn dọn UI cục bộ ngay cả khi session cookie đã mất từ trước.
     } finally {
       clearAuthenticatedUser(dispatch)
       clearPendingRedirectUrls()

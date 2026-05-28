@@ -21,6 +21,7 @@ import type { LoginRequest } from "@/types/Auth/LoginRequest"
 import type { SignupRequest } from "@/types/Auth/SignupRequest"
 import type { OrderResponse } from "@/types/order/OrderResponse"
 import { ChatMessage, ChatRoom, WsTicketResponse } from "@/types/chat/chat"
+import { ForgotPasswordRequest, ResetPasswordRequest } from "@/types/Auth/forgotPassword"
 
 // Gửi API client qua proxy backend của Next và kèm cookie.
 const rawBaseQuery = fetchBaseQuery({
@@ -171,6 +172,20 @@ export const backendApi = createApi({
         method: "POST",
         url: `/chat/rooms/${roomId}/read`,
       }),
+    }),
+    forgotPassword: builder.mutation<ApiResponseType<null>,ForgotPasswordRequest>({
+      query: (body) =>({
+        method: "POST",
+        url: "/auth/forgot-password",
+        body:body
+      })
+    }),
+    resetPassword: builder.mutation<ApiResponseType<null>,ResetPasswordRequest>({
+      query: (body) =>({
+        method:"POST",
+        url: "/auth/reset-password",
+        body:body
+      })
     })
   }),
   reducerPath: "backendApi",
@@ -192,5 +207,7 @@ export const {
   useLazyGetProductChatRoomQuery,
   useLazyGetChatRoomsQuery,
   useLazyGetChatRoomMessagesQuery,
-  useMarkChatRoomAsReadMutation
+  useMarkChatRoomAsReadMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation
 } = backendApi
