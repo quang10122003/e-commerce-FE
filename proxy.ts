@@ -34,17 +34,15 @@ function checkResetPassword(
   const token = searchParams.get("token")
 
   if (pathname === ResetPathName && !token) {
-    return NextResponse.redirect(new URL("/?auth=login", request.url))
+    return NextResponse.redirect(new URL("/", request.url))
   }
-
-  return NextResponse.next()
 }
 
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
 
   const resetCheck = checkResetPassword(pathname, searchParams, request)
-  if (resetCheck instanceof NextResponse) {
+  if (resetCheck) {
     return resetCheck
   }
 

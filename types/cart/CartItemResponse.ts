@@ -3,6 +3,7 @@ export interface CartItemResponse {
     productName: string;
     thumbnail: string;
     unitPrice: number;
+    stock: number;
     quantity: number;
     totalPrice: number;
 }

@@ -46,8 +46,8 @@ export default function CartSidebar() {
     <div
       aria-hidden={!isOpen}
       className={cn(
-        "fixed inset-0 z-50 overflow-x-hidden max-[750px]:hidden",
-        isOpen ? "pointer-events-auto visible" : "pointer-events-none invisible"
+        "fixed inset-0 z-100 overflow-x-hidden max-[750px]:hidden",
+        isOpen ? "pointer-events-auto" : "pointer-events-none"
       )}
     >
       <button

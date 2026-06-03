@@ -2,13 +2,11 @@
 
 import { Provider } from "react-redux"
 import type { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse"
-import Footer from "@/components/footer/Footer"
 import { NotificationProvider } from "@/components/ui/NotificationProvider"
 import AuthModals from "./AuthModals"
 import SessionBootstrap from "./SessionBootstrap"
 import { store } from "./store"
-import Navbar from "@/components/header/Navbar"
-import CartSidebar from "@/components/cart/CartSidebar" // 👈 thêm
+import CartSidebar from "@/components/cart/CartSidebar"
 import { TailwindIndicator } from "@/components/TailwindIndicatort"
 
 type ProvidersProps = {
@@ -21,15 +19,12 @@ export default function Providers({ children, hasSessionCookie, initialUser }: P
   return (
     <Provider store={store}>
       <NotificationProvider>
+        {/* Khởi tạo session từ cookie khi app load */}
         <SessionBootstrap hasSessionCookie={hasSessionCookie} initialUser={initialUser} />
-         {/* singin singout */}
+        {/* Global UI — cần mount toàn app, kể cả route (standalone) */}
         <AuthModals />
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <div className="flex-1">{children}</div>
-          <Footer />
-        </div>
         <CartSidebar />
+        {children}
       </NotificationProvider>
       <TailwindIndicator />
     </Provider>

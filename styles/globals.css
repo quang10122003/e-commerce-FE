@@ -135,3 +135,189 @@
     line-height: 1.8;
   }
 }
+
+/* SUCCESS ORDER animation */
+
+/* Animation xuất hiện của card */
+@keyframes success-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+   /* Animation xuất hiện của vòng tròn thành công */
+@keyframes success-icon-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  70% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+   /* Hiệu ứng vòng sáng lan tỏa */
+
+@keyframes success-ring-pulse {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+
+   /* Animation xuất hiện của dấu tick */
+
+
+@keyframes success-check-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+   /* Animation xuất hiện của nội dung xác nhận */
+
+
+@keyframes success-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+   /* Animation hiển thị mã đơn hàng */
+
+
+@keyframes success-order-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+   /* Card tổng thể của trang thành công */
+
+
+.success-card {
+  animation: success-card-enter 0.5s ease-out;
+}
+
+
+   /* Khu vực icon thành công */
+
+
+.success-icon-wrapper {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 96px;
+  height: 96px;
+}
+
+
+   /* Vòng sáng phía sau icon */
+
+
+.success-ring {
+  position: absolute;
+  inset: 0;
+
+  border-radius: var(--radius-full);
+
+  background: var(--primary);
+
+  animation: success-ring-pulse 1.8s ease-out infinite;
+}
+
+   /* Hình tròn chứa dấu tick */
+
+
+.success-icon {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 96px;
+  height: 96px;
+
+  border-radius: var(--radius-full);
+
+  background: var(--primary);
+
+  color: var(--primary-foreground);
+
+  animation: success-icon-enter 0.7s ease-out forwards;
+}
+
+   /* Dấu tick xác nhận thành công */
+
+
+.success-check {
+  animation: success-check-enter 0.4s ease-out;
+  animation-delay: 0.3s;
+  animation-fill-mode: both;
+}
+
+
+   /* Khối tiêu đề và mô tả */
+
+
+.success-content {
+  margin-top: 2rem;
+
+  opacity: 0;
+
+  animation: success-content-enter 0.6s ease-out forwards;
+  animation-delay: 0.8s;
+}
+
+   /* Mã đơn hàng */
+
+
+.success-order-code {
+  opacity: 0;
+
+  animation: success-order-enter 0.6s ease-out forwards;
+  animation-delay: 1.2s;
+}

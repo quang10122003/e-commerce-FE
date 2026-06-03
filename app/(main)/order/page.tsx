@@ -47,6 +47,7 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
   const hasRefreshMarker = readSearchParam(params[AUTH_REFRESHED_SEARCH_PARAM]) === "1"
   // Dữ liệu đơn hàng được lấy ở server rồi truyền xuống client component để render/tương tác.
   const { errorMessage, orders } = await getOrderInitialData(refreshRedirectPath)
+  console.log("odder" + orders)
 
   // Refresh auth thành công thì xóa marker khỏi URL.
   if (!errorMessage && hasRefreshMarker) {

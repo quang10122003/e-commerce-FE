@@ -27,3 +27,9 @@ export interface OrderResponse {
 
     items: OrderItemResponse[]
 }
+
+export interface CheckoutResponse {
+    orderCode: string;
+    paymentMethod: string;
+    status: string;
+}

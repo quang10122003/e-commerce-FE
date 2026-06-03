@@ -15,13 +15,17 @@ import { getCurrentBrowserRoute } from "@/lib/navigation"
 import type { ApiResponseType } from "@/types/ApiResponse/ApiResponseType"
 import type AddCartRequest from "@/types/cart/AddCartRequest"
 import type { CartResponse } from "@/types/cart/CartResponse"
+import type { CheckoutCartTotalRequest } from "@/types/cart/CheckoutCartTotalRequest"
+import type { CheckoutCartTotalResponse } from "@/types/cart/CheckoutCartTotalResponse"
 import type { AuthResponse } from "@/types/Auth/AuthResponse"
 import type { CurrentUserResponse } from "@/types/Auth/CurrentUserResponse"
 import type { LoginRequest } from "@/types/Auth/LoginRequest"
 import type { SignupRequest } from "@/types/Auth/SignupRequest"
-import type { OrderResponse } from "@/types/order/OrderResponse"
+import type { CheckoutResponse, OrderResponse } from "@/types/order/OrderResponse"
 import { ChatMessage, ChatRoom, WsTicketResponse } from "@/types/chat/chat"
 import { ForgotPasswordRequest, ResetPasswordRequest } from "@/types/Auth/forgotPassword"
+import { OrderRequest } from "@/types/order/CreateOrderRequest"
+import { QrRepone, QrRquest } from "@/types/payment/paymentType"
 
 // Gửi API client qua proxy backend của Next và kèm cookie.
 const rawBaseQuery = fetchBaseQuery({
@@ -98,6 +102,23 @@ export const backendApi = createApi({
         url: "/cart/me",
       }),
     }),
+    removeCartItem: builder.mutation<ApiResponseType<CartResponse>, number>({
+      invalidatesTags: ["Cart"],
+      query: (productId) => ({
+        method: "DELETE",
+        url: `/cart/items/${productId}`,
+      }),
+    }),
+    calculateCheckoutTotal: builder.mutation<
+      ApiResponseType<CheckoutCartTotalResponse>,
+      CheckoutCartTotalRequest
+    >({
+      query: (body) => ({
+        body,
+        method: "POST",
+        url: "/cart/checkout-total",
+      }),
+    }),
     getMe: builder.query<ApiResponseType<CurrentUserResponse>, void>({
       providesTags: ["Auth"],
       query: () => ({
@@ -110,6 +131,15 @@ export const backendApi = createApi({
       query: () => ({
         method: "GET",
         url: "/orders/me",
+      }),
+    }),
+    // Tạo đơn hàng mới từ thông tin checkout của người dùng.
+    createOrder: builder.mutation<ApiResponseType<CheckoutResponse>, OrderRequest>({
+      invalidatesTags: ["Cart", "Orders"],
+      query: (body) => ({
+        body,
+        method: "POST",
+        url: "/orders",
       }),
     }),
     login: builder.mutation<ApiResponseType<AuthResponse>, LoginRequest>({
@@ -186,7 +216,14 @@ export const backendApi = createApi({
         url: "/auth/reset-password",
         body:body
       })
-    })
+    }),
+    getQr: builder.mutation<ApiResponseType<QrRepone>, QrRquest>({
+      query: (body) => ({
+        url: "/payments/qr",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
   reducerPath: "backendApi",
   tagTypes: ["Auth", "Cart", "Orders", "ChatRooms"],
@@ -195,6 +232,8 @@ export const backendApi = createApi({
 export const {
   useAddCartMutation,
   useGetCartQuery,
+  useCalculateCheckoutTotalMutation,
+  useCreateOrderMutation,
   useGetMeQuery,
   useGetOrderQuery,
   useLazyGetCartQuery,
@@ -208,6 +247,8 @@ export const {
   useLazyGetChatRoomsQuery,
   useLazyGetChatRoomMessagesQuery,
   useMarkChatRoomAsReadMutation,
+  useRemoveCartItemMutation,
   useForgotPasswordMutation,
-  useResetPasswordMutation
+  useResetPasswordMutation,
+  useGetQrMutation
 } = backendApi
