@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Client, IMessage, StompSubscription } from "@stomp/stompjs"
 
 import { useCreateWsTicketMutation } from "@/client/api/backend-api"
-import { createChatStompClient } from "@/client/chat/createChatStompClient"
+import { createChatStompClient } from "@/client/socket/createChatStompClient"
 import type { ChatMessage, ChatReadReceipt } from "@/types/chat/chat"
 
 type SocketStatus = "idle" | "connecting" | "connected" | "error"

@@ -6,8 +6,8 @@ import {
   useCreateChatRoomMutation,
   useLazyGetProductChatRoomQuery,
 } from "@/client/api/backend-api"
-import { isNotFoundError } from "@/client/chat/chat-state"
-import { useChatRoom } from "@/client/chat/useChatRoom"
+import { isNotFoundError } from "@/client/socket/chat-state"
+import { useChatRoom } from "@/client/socket/useChatRoom"
 import { extractErrorMessage } from "@/lib/error"
 import type { ChatRoom } from "@/types/chat/chat"
 

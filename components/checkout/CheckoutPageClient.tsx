@@ -101,10 +101,12 @@ export default function CheckoutPageClient({
       },
     }
     try{
-      await createOrder(orderRequest).unwrap()
-
-    }catch(e){
-
+      const repone = await createOrder(orderRequest).unwrap()
+      window.open(`/payment/${repone.data!.orderCode}`, "_blank");
+    } catch (error){
+      showNotification(extractErrorMessage(error), {
+        variant: "error",
+      })
     }
   }
 

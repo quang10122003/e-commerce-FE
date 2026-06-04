@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { MessageCircle } from "lucide-react"
 
-import { useChatInbox } from "@/client/chat/useChatInbox"
+import { useChatInbox } from "@/client/socket/useChatInbox"
 import Container from "@/components/shared/Container"
 import { useNotification } from "@/components/ui/NotificationProvider"
 import type { ChatRoom } from "@/types/chat/chat"

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react"
 import { MessageCircle, Send, X } from "lucide-react"
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
-import { useProductChat } from "@/client/chat/useProductChat"
+import { useProductChat } from "@/client/socket/useProductChat"
 import { openLogin } from "@/client/session/loginModalSlice"
 import { pushPendingRedirectUrl } from "@/client/session/redirect-stack"
 import CardChatProduct from "@/components/Products/detail/CardChatProduct"

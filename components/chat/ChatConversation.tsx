@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Send } from "lucide-react"
 
-import { useChatRoom } from "@/client/chat/useChatRoom"
+import { useChatRoom } from "@/client/socket/useChatRoom"
 import ChatMessageBubble from "@/components/chat/ChatMessageBubble"
 import Container from "@/components/shared/Container"
 import { useNotification } from "@/components/ui/NotificationProvider"
