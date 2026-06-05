@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Send } from "lucide-react"
 
-import { useChatRoom } from "@/client/socket/useChatRoom"
+import { useChatRoom } from "@/client/socket/chat/useChatRoom"
 import ChatMessageBubble from "@/components/chat/ChatMessageBubble"
 import Container from "@/components/shared/Container"
 import { useNotification } from "@/components/ui/NotificationProvider"
@@ -119,7 +119,7 @@ export default function ChatConversation({ initialRoom, product }: ChatConversat
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">Gia</span>
                   <span className="font-semibold text-primary">
-                    {product ? `$${formatCurrency(product.price)}` : "Dang cap nhat"}
+                    {product ? formatCurrency(product.price) : "Dang cap nhat"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">

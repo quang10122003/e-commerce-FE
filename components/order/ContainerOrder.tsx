@@ -1,6 +1,6 @@
 import { OrderResponse } from "@/types/order/OrderResponse"
 import MainButton from "@/components/ui/main-button"
-import { formatCurrency, formatDateTime } from "@/lib/format"
+import { formatCurrency, formatDateTime, multiplyMoney } from "@/lib/format"
 import { getOrderStatusMeta } from "@/lib/order-display"
 import { getProductInitials } from "@/lib/product-display"
 
@@ -71,7 +71,7 @@ export default function ContainerOrder({ filteredOrder }: Props) {
                 Thành tiền
               </p>
               <p className="mt-2 text-lg font-bold text-slate-950">
-                {formatCurrency(item.price * item.quantity)}
+                {formatCurrency(multiplyMoney(item.price, item.quantity))}
               </p>
             </div>
           </div>

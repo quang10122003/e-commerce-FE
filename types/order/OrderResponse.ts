@@ -1,8 +1,10 @@
+import type { MoneyValue } from "@/types/money/MoneyValue"
+
 export interface OrderItemResponse {
     id: number
     productId: number | null
     productName: string
-    price: number
+    price: MoneyValue
     quantity: number
     thumbnail: string | null
 }
@@ -21,7 +23,7 @@ export interface OrderResponse {
     shippingPhone: string
     shippingAddress: string
 
-    totalAmount: number
+    totalAmount: MoneyValue
 
     createdAt: string // ISO date string từ backend
 

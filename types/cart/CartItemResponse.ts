@@ -1,9 +1,11 @@
+import type { MoneyValue } from "@/types/money/MoneyValue";
+
 export interface CartItemResponse {
     productId: number;
     productName: string;
     thumbnail: string;
-    unitPrice: number;
+    unitPrice: MoneyValue;
     stock: number;
     quantity: number;
-    totalPrice: number;
+    totalPrice: MoneyValue;
 }

@@ -17,7 +17,7 @@ export default function SuccessOrderPage() {
     useEffect(() => {
         const timer = setTimeout(() => {
             router.replace("/order")
-        }, 3000)
+        }, 5000)
 
         return () => clearTimeout(timer)
     }, [router])

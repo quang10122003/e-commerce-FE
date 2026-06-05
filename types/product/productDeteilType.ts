@@ -1,11 +1,12 @@
 import { ProductStatus } from "./ProductsummerType";
+import type { MoneyValue } from "@/types/money/MoneyValue";
 
 export type ProductDetail = {
     id: number;
     name: string;
     purchases: number;
     description: string;
-    price: number; // BigDecimal → number
+    price: MoneyValue;
     stock: number;
     status: ProductStatus;
     nameCategory: string

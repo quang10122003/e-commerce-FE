@@ -12,10 +12,11 @@ import Container from "@/components/shared/Container"
 import MainButton from "@/components/ui/main-button"
 import { useNotification } from "@/components/ui/NotificationProvider"
 import { extractErrorMessage } from "@/lib/error"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, multiplyMoney } from "@/lib/format"
 import { getProductInitials } from "@/lib/product-display"
 import type { CartItemResponse } from "@/types/cart/CartItemResponse"
 import type { CartResponse } from "@/types/cart/CartResponse"
+import type { MoneyValue } from "@/types/money/MoneyValue"
 
 type CartPageClientProps = {
   cartData: CartResponse | null
@@ -35,7 +36,7 @@ function clampQuantity(value: number, stock: number) {
 
 // Tính thành tiền tạm thời cho một dòng sản phẩm.
 function getItemTotal(item: CartItemResponse) {
-  return item.unitPrice * item.quantity
+  return multiplyMoney(item.unitPrice, item.quantity)
 }
 
 // Chuẩn hóa số lượng hiển thị để không vượt tồn kho hiện tại.
@@ -45,7 +46,7 @@ function normalizeCartItem(item: CartItemResponse) {
   return {
     ...item,
     quantity,
-    totalPrice: item.unitPrice * quantity,
+    totalPrice: multiplyMoney(item.unitPrice, quantity),
   }
 }
 
@@ -86,7 +87,7 @@ export default function CartPageClient({ cartData, errorMessage }: CartPageClien
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([])
 
   // Lưu tổng tiền backend trả về theo danh sách sản phẩm đã chọn.
-  const [checkoutTotalAmount, setCheckoutTotalAmount] = useState(0)
+  const [checkoutTotalAmount, setCheckoutTotalAmount] = useState<MoneyValue>(0)
 
   // Lưu productId đang xóa để khóa đúng nút xóa trên UI.
   const [removingProductId, setRemovingProductId] = useState<number | null>(null)
@@ -222,7 +223,7 @@ export default function CartPageClient({ cartData, errorMessage }: CartPageClien
       return {
         ...item,
         quantity,
-        totalPrice: item.unitPrice * quantity,
+        totalPrice: multiplyMoney(item.unitPrice, quantity),
       }
     })
 

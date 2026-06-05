@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react"
 import { MessageCircle, Send, X } from "lucide-react"
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
-import { useProductChat } from "@/client/socket/useProductChat"
+import { useProductChat } from "@/client/socket/chat/useProductChat"
 import { openLogin } from "@/client/session/loginModalSlice"
 import { pushPendingRedirectUrl } from "@/client/session/redirect-stack"
 import CardChatProduct from "@/components/Products/detail/CardChatProduct"
@@ -119,7 +119,7 @@ export default function ProductChatWidget({ product }: ProductChatWidgetProps) {
               />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-950">{product.name}</p>
-                <p className="text-xs text-slate-500">${formatCurrency(product.price)}</p>
+                <p className="text-xs text-slate-500">{formatCurrency(product.price)}</p>
               </div>
             </div>
           </div>

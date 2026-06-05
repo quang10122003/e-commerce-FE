@@ -14,8 +14,8 @@ import {
   applyRoomPreviewMessage,
   isIncomingTextMessage,
   sortRoomsByRecentActivity,
-} from "@/client/socket/chat-state"
-import { useChatRoomSocket } from "@/client/socket/useChatRoomSocket"
+} from "@/client/socket/chat/chat-state"
+import { useChatRoomSocket } from "@/client/socket/chat/useChatRoomSocket"
 import { extractErrorMessage } from "@/lib/error"
 import type { ChatMessage, ChatReadReceipt, ChatRoom } from "@/types/chat/chat"
 
