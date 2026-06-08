@@ -1,4 +1,4 @@
-// đăng ký lăng nghe sự kiện cho tất cả các room đc gửi từ page 
+// Đăng ký lắng nghe sự kiện cho tất cả các room được gửi từ page.
 // Khi có message mới:
 //   cập nhật lastMessageContent
 //   cập nhật lastMessageSenderName

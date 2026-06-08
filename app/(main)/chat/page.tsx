@@ -12,10 +12,11 @@ type ChatPageProps = {
   searchParams: Promise<RouteSearchParams>
 }
 
-async function getChatInitialData(refreshRedirectPath: string) {
+async function getChatInitialData(refreshRedirectPath: string, search?: string) {
   try {
     // Server page lấy danh sách room đầu tiên để HTML có dữ liệu ngay khi render.
-    const response = await serverPrivateFetch<ChatRoom[]>("/chat/rooms", {
+    const query = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : ""
+    const response = await serverPrivateFetch<ChatRoom[]>(`/chat/rooms${query}`, {
       refreshRedirectPath,
     })
 
@@ -37,6 +38,8 @@ async function getChatInitialData(refreshRedirectPath: string) {
 export default async function ChatPage({ searchParams }: ChatPageProps) {
   // Next 16 truyền searchParams dạng Promise trong Server Component.
   const params = await searchParams
+  // Query search của trang chat dùng để lọc danh sách theo tên sản phẩm.
+  const search = readSearchParam(params.search)
 
   // Ghi nhớ đúng URL hiện tại để sau khi refresh token có thể quay lại /chat kèm query cũ.
   const refreshRedirectPath = buildInternalPathWithSearchParams("/chat", params)
@@ -45,7 +48,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   const hasRefreshMarker = readSearchParam(params[AUTH_REFRESHED_SEARCH_PARAM]) === "1"
 
   // Dữ liệu đi từ Server Component xuống Client Component, sau đó useChatInbox tiếp quản realtime.
-  const { errorMessage, rooms } = await getChatInitialData(refreshRedirectPath)
+  const { errorMessage, rooms } = await getChatInitialData(refreshRedirectPath, search)
 
   // Nếu refresh token đã xong và dữ liệu tải ổn, xóa marker khỏi URL để URL sạch lại.
   if (!errorMessage && hasRefreshMarker) {

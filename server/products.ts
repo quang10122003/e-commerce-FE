@@ -12,6 +12,7 @@ type ActiveProductsQueryParams = {
   categoryId?: number
   page: number
   size: number
+  search?: string
   sort: string
 }
 
@@ -29,11 +30,13 @@ function normalizeSort(value: string) {
 export function parseProductCatalogFilters(searchParams: ProductSearchParams): ProductCatalogFilters {
   const rawPage = Number.parseInt(readSearchParam(searchParams.page, "1"), 10)
   const rawCategoryId = Number.parseInt(readSearchParam(searchParams.categoryId), 10)
+  const search = readSearchParam(searchParams.search).trim()
   const { sort, sortDirection } = normalizeSort(readSearchParam(searchParams.sort, DEFAULT_PRODUCT_SORT))
 
   return {
     categoryId: Number.isFinite(rawCategoryId) && rawCategoryId > 0 ? rawCategoryId : undefined,
     currentPage: Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1,
+    search: search || undefined,
     sort,
     sortDirection,
   }
@@ -50,6 +53,10 @@ function buildActiveProductsSearchParams(params: ActiveProductsQueryParams) {
     searchParams.set("categoryId", String(params.categoryId))
   }
 
+  if (params.search?.trim()) {
+    searchParams.set("search", params.search.trim())
+  }
+
   return searchParams
 }
 
@@ -58,6 +65,7 @@ export function buildActiveProductsBackendPath(filters: ProductCatalogFilters) {
     categoryId: filters.categoryId,
     page: Math.max(filters.currentPage - 1, 0),
     size: PRODUCTS_PAGE_SIZE,
+    search: filters.search,
     sort: filters.sort,
   })
 

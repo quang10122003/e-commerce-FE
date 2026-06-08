@@ -1,8 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Menu, Search, ShoppingCart, X } from "lucide-react"
 
 import { backendApi, useGetCartQuery, useLazyGetCartQuery, useLogoutMutation } from "@/client/api/backend-api"
@@ -43,6 +43,39 @@ const USER_MENU_ITEMS: UserMenuItem[] = [
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL
 
+type SearchConfig = {
+  disabled: boolean
+  placeholder: string
+}
+
+function getSearchConfig(pathname: string): SearchConfig {
+  if (pathname === "/products" || pathname.startsWith("/products/")) {
+    return {
+      disabled: false,
+      placeholder: "Tìm kiếm sản phẩm...",
+    }
+  }
+
+  if (pathname === "/chat" || pathname.startsWith("/chat/")) {
+    return {
+      disabled: false,
+      placeholder: "Tìm kiếm chat theo tên sản phẩm...",
+    }
+  }
+
+  if (pathname === "/order" || pathname.startsWith("/order/")) {
+    return {
+      disabled: true,
+      placeholder: "Tìm kiếm đơn hàng...",
+    }
+  }
+
+  return {
+    disabled: true,
+    placeholder: "Tìm kiếm...",
+  }
+}
+
 function getUserDisplayInfo(fullName?: string, email?: string) {
   const fallbackCharacter = fullName?.trim().charAt(0) || email?.trim().charAt(0) || "U"
   return {
@@ -57,15 +90,8 @@ export default function Navbar() {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const pathname = usePathname()
-  const hiddenSearchRoutes: string[] = ["/", "/products/"]
-
-  const showSearch = !hiddenSearchRoutes.some((route) => {
-    if (route.endsWith("/") && route.length > 1) {
-      return pathname.startsWith(route)
-    }
-
-    return pathname === route
-  })
+  const searchParams = useSearchParams()
+  const searchConfig = useMemo(() => getSearchConfig(pathname), [pathname])
 
   const { isAuthenticated, isCheckingAuth, currentUser } = useAppSelector((state) => state.auth)
   const isCartSidebarOpen = useAppSelector((state) => state.cartSidebar.isOpen)
@@ -80,9 +106,59 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false)
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false)
+  // Giá trị tìm kiếm đang hiển thị trên thanh điều hướng.
+  const [searchValue, setSearchValue] = useState("")
+  // Chốt từ khóa sau khi người dùng ngừng gõ để mới điều hướng.
+  const searchDebounceRef = useRef<number | null>(null)
 
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userDisplay = getUserDisplayInfo(currentUser?.fullName, currentUser?.email)
+
+  useEffect(() => {
+    if (!searchConfig.disabled) {
+      setSearchValue(searchParams.get("search") ?? "")
+      return
+    }
+
+    setSearchValue("")
+  }, [pathname, searchConfig.disabled, searchParams])
+
+  useEffect(() => {
+    if (searchConfig.disabled) {
+      return
+    }
+
+    if (searchDebounceRef.current !== null) {
+      window.clearTimeout(searchDebounceRef.current)
+    }
+
+    searchDebounceRef.current = window.setTimeout(() => {
+      const keyword = searchValue.trim()
+      const currentKeyword = searchParams.get("search") ?? ""
+
+      if (keyword === currentKeyword) {
+        return
+      }
+
+      const nextParams = new URLSearchParams(searchParams.toString())
+
+      if (keyword) {
+        nextParams.set("search", keyword)
+      } else {
+        nextParams.delete("search")
+      }
+
+      nextParams.delete("page")
+      const targetPath = pathname.startsWith("/chat") ? "/chat" : "/products"
+      router.push(`${targetPath}${nextParams.toString() ? `?${nextParams.toString()}` : ""}`)
+    }, 400)
+
+    return () => {
+      if (searchDebounceRef.current !== null) {
+        window.clearTimeout(searchDebounceRef.current)
+      }
+    }
+  }, [pathname, router, searchConfig.disabled, searchParams, searchValue])
 
   const closeAllMenus = useCallback(() => {
     setIsDesktopUserMenuOpen(false)
@@ -218,15 +294,18 @@ export default function Navbar() {
             </ul>
           </div>
 
+          {/* Khu vực tìm kiếm và hành động nhanh trên thanh điều hướng. */}
           <div className="order-3 flex w-full items-center gap-3 sm:order-0 sm:flex-1 lg:w-auto lg:max-w-xl">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <Input
                 className={cn(
                   "pl-11",
-                  !showSearch && "pointer-events-none bg-slate-100 text-slate-400 opacity-70"
+                  searchConfig.disabled && "pointer-events-none bg-slate-100 text-slate-400 opacity-70"
                 )}
-                placeholder="Tìm kiếm sản phẩm..."
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder={searchConfig.placeholder}
+                value={searchValue}
                 type="text"
               />
             </div>
