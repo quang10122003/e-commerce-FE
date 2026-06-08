@@ -1,5 +1,7 @@
 import type { MoneyValue } from "@/types/money/MoneyValue"
 
+export type PaymentMethod = "COD" | "SEPAY"
+
 export interface OrderItemResponse {
     id: number
     productId: number | null
@@ -22,6 +24,12 @@ export interface OrderResponse {
     shippingName: string
     shippingPhone: string
     shippingAddress: string
+
+    // Phương thức thanh toán của đơn hàng.
+    paymentMethod: PaymentMethod | null
+
+    // Thời điểm hết hạn thanh toán, có thể null nếu không có payment.
+    expiredAt: string | null
 
     totalAmount: MoneyValue
 
