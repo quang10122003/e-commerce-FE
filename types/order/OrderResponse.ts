@@ -21,6 +21,9 @@ export interface OrderResponse {
     id: number
     status: OrderStatus
 
+    // Mã đơn hàng dùng để điều hướng sang trang thanh toán.
+    orderCode: string
+
     shippingName: string
     shippingPhone: string
     shippingAddress: string

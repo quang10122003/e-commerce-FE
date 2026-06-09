@@ -20,6 +20,10 @@
   --color-secondary: var(--surface-secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-popover-foreground: var(--foreground);
   --color-popover: var(--surface-primary);
   --color-card-foreground: var(--foreground);
@@ -45,6 +49,8 @@
   --primary-ring: rgb(15 74 217 / 0.14);
   --success-soft: #e7f8ef;
   --warning-soft: #fff6e4;
+  --warning: #8a5a00;
+  --warning-foreground: #8a5a00;
   --danger-soft: #ffe9e9;
   --error: #dc2626;
   --muted-foreground: #64748b;

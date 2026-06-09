@@ -77,7 +77,10 @@ export default function QrPage() {
             if (window.opener) {
                 window.opener.location.href = `/success_order/${data.orderId}`;
                 window.close();
+                return;
             }
+
+            window.location.href = `/success_order/${data.orderId}`;
         },
 
         onAmountMismatch: () => {
