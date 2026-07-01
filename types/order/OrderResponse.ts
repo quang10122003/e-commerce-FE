@@ -13,6 +13,7 @@ export interface OrderItemResponse {
 
 export type OrderStatus =
     | "PENDING"
+    | "CONFIRMED"
     | "SHIPPING"
     | "COMPLETED"
     | "CANCELLED"

@@ -1,7 +1,7 @@
 import { readSearchParam, type RouteSearchParams } from "@/lib/search-params"
 import type { OrderStatus } from "@/types/order/OrderResponse"
 
-const VALID_ORDER_STATUS = new Set<OrderStatus>(["PENDING", "SHIPPING", "COMPLETED", "CANCELLED"])
+const VALID_ORDER_STATUS = new Set<OrderStatus>(["PENDING","CONFIRMED" ,"SHIPPING", "COMPLETED", "CANCELLED"])
 
 export function buildOrderStatusHref(status: string) {
   if (status === "All") {

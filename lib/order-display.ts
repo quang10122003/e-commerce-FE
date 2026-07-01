@@ -7,6 +7,11 @@ export function getOrderStatusMeta(status: OrderResponse["status"]) {
         className: "bg-warning-soft text-[#9a6700]",
         label: "Chờ xác nhận",
       }
+    case "CONFIRMED":
+      return {
+        className: "bg-primary-soft text-primary", 
+        label: "Đã xác nhận",
+      }
     case "SHIPPING":
       return {
         className: "bg-primary-soft text-primary",

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 
 import { OrderResponse } from "@/types/order/OrderResponse"
 import MainButton from "@/components/ui/main-button"
@@ -47,7 +46,6 @@ function calcRemainingMs(expiredAt: string | null | undefined): number {
 }
 
 export default function ContainerOrder({ filteredOrder }: Props) {
-  const router = useRouter()
   const statusMeta = getOrderStatusMeta(filteredOrder.status)
 
   const isSepayPending =
@@ -96,7 +94,7 @@ export default function ContainerOrder({ filteredOrder }: Props) {
               <h2 className="text-[18px] font-semibold text-slate-950">
                 Đơn hàng #{filteredOrder.id}
               </h2>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.className}`}>
+              <span className={`rounded-full  px-3 py-1 text-xs font-semibold ${statusMeta.className}`}>
                 {statusMeta.label}
               </span>
             </div>

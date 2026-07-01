@@ -25,6 +25,10 @@ export default function OrderClient({ errorMessage, orders, selectedStatus }: Or
       value: "PENDING",
     },
     {
+      title: "Đã xác nhận",
+      value: "CONFIRMED",
+    },
+    {
       title: "Đang vận chuyển",
       value: "SHIPPING",
     },
