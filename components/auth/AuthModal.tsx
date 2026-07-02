@@ -185,8 +185,17 @@ export default function AuthModal() {
       case "fullName":
         return {
           onChange: () => clearErrors("root"),
-          validate: (value) =>
-            !isRegisterMode || value.trim() ? true : "Vui lòng nhập họ và tên.",
+          validate: (value) => {
+            if (!isRegisterMode) return true
+
+            const trimmedValue = value.trim()
+
+            if (!trimmedValue) return "Vui lòng nhập họ và tên."
+            if (trimmedValue.length < 2) return "Họ và tên phải có ít nhất 2 ký tự."
+            if (trimmedValue.length > 255) return "Họ và tên không được vượt quá 255 ký tự."
+
+            return true
+          },
         }
       case "email":
         return {
@@ -201,6 +210,18 @@ export default function AuthModal() {
         return {
           onChange: () => clearErrors("root"),
           required: "Vui lòng nhập mật khẩu.",
+          ...(isRegisterMode
+            ? {
+                minLength: {
+                  value: 6,
+                  message: "Mật khẩu phải có ít nhất 6 ký tự.",
+                },
+                maxLength: {
+                  value: 100,
+                  message: "Mật khẩu không được vượt quá 100 ký tự.",
+                },
+              }
+            : {}),
         }
       case "confirmPassword":
         return {

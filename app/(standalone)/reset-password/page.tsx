@@ -165,6 +165,10 @@ export default function ResetPasswordPage() {
                     value: 6,
                     message: "Mật khẩu phải có ít nhất 6 ký tự.",
                   },
+                  maxLength: {
+                    value: 100,
+                    message: "Mật khẩu không được vượt quá 100 ký tự.",
+                  },
                 })}
               />
               {/* Nút toggle hiện/ẩn mật khẩu */}
