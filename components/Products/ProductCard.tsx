@@ -10,14 +10,18 @@ import { formatCurrency } from "@/lib/format"
 import { ProductType } from "@/types/product/ProductsummerType"
 import AddCartRequest from "@/types/cart/AddCartRequest"
 import { useNotification } from "../ui/NotificationProvider"
+import { useRouter } from "next/navigation"
 
 type ProductCardProps = {
   product: ProductType
 }
 
+
+
 export default function ProductCard({ product }: ProductCardProps) {
   const { showNotification } = useNotification()
   const [addCart] = useAddCartMutation()
+  const router = useRouter()
   const isOutOfStock = product.stock <= 0
 
   async function handleAddCartRequest(productId: number) {
@@ -27,7 +31,18 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
     return await addCart(addcartRequest).unwrap()
   }
+  function handldePayproduct(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+    const params = new URLSearchParams()
 
+    params.set(
+      "items",
+      `${product.id}:${1}`
+    )
+    router.push(`/checkout?${params.toString()}`) ;
+
+  }
   async function handleAddCart(
     productId: number,
     event: React.MouseEvent<HTMLButtonElement>,
@@ -125,6 +140,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               Thêm giỏ hàng
             </MainButton>
             <MainButton
+              onClick={(event)=>handldePayproduct(event)}
               size="small"
               type="button"
               disabled={isOutOfStock}

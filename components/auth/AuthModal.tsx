@@ -502,6 +502,27 @@ export default function AuthModal() {
           {formCopy.submitLabel}
         </MainButton>
 
+        {/* Nút đăng nhập bằng Google — chỉ giao diện, bạn có thể thêm logic vào onClick */}
+        {isLoginMode ? (
+          <button
+            type="button"
+            className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-slate-300 bg-white text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            onClick={() => {
+              // TODO: Thêm logic đăng nhập bằng Google tại đây
+            }}
+          >
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm">
+              <svg viewBox="0 0 46 46" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path fill="#4285F4" d="M23 9.5c3.3 0 6.1 1.1 8.1 3.1l6-6C33.2 3 28.5 1 23 1 14 1 6.5 5.6 2.5 12.7l7.4 5.7C11.7 12.5 17.7 9.5 23 9.5Z" />
+                <path fill="#34A853" d="M44.5 23.5c0-1.5-.1-2.4-.4-3.5H23v7h12.3c-.5 3-2.3 5.4-5 7.1l7.7 6c4.5-4.1 7.5-10.2 7.5-16.6Z" />
+                <path fill="#FBBC05" d="M10 27.3c-.7-2.1-1-4.3-1-6.6s.4-4.5 1-6.6L2.5 8.4C.9 11.4 0 14.9 0 18.7s.9 7.3 2.5 10.4l7.5-1.8Z" />
+                <path fill="#EA4335" d="M23 44.5c5.5 0 10.2-1.8 13.6-5l-7.7-6c-2.1 1.4-4.7 2.2-7.9 2.2-5.3 0-11.3-3-13.1-7.5l-7.4 5.7C6.5 40.4 14 44.5 23 44.5Z" />
+              </svg>
+            </span>
+            Đăng nhập bằng Google
+          </button>
+        ) : null}
+
         {/* Nút quên mật khẩu — chỉ hiện ở mode login */}
         {isLoginMode ? (
           <button

@@ -24,6 +24,10 @@ export default function ProductCatalog({ categories, filters, productsPage }: Pr
   const [isPending, startTransition] = useTransition()
   const productList: ProductType[] = productsPage.data?.items ?? []
   const totalPages = productsPage.data?.totalPages ?? 0
+  // Flag khi backend trả lỗi để giữ layout và show placeholder.
+  const isErrorState = !productsPage.success
+  // Render skeleton nếu backend lỗi và chưa có danh sách sản phẩm.
+  const shouldRenderSkeleton = isErrorState && productList.length === 0
 
   function updateProductFilters(href: string) {
     startTransition(() => {
@@ -53,6 +57,55 @@ export default function ProductCatalog({ categories, filters, productsPage }: Pr
     updateProductFilters(buildProductsPageHrefWithPatch(filters, { page }))
   }
 
+  // Hiển thị placeholder sản phẩm dạng skeleton khi backend lỗi.
+  function renderProductSkeletons() {
+    return (
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))] opacity-90">
+        {Array.from({ length: 6 }, (_, index) => (
+          <article
+            key={index}
+            className="rounded-[10px] border border-slate-200/80 bg-white p-5 shadow-sm"
+          >
+            <div className="aspect-[4/4.8] rounded-[10px] bg-slate-200/80 animate-pulse" />
+            <div className="mt-4 space-y-3">
+              <div className="h-4 rounded-full bg-slate-200/80 animate-pulse" />
+              <div className="h-3 w-4/6 rounded-full bg-slate-200/80 animate-pulse" />
+              <div className="h-3 w-3/5 rounded-full bg-slate-200/80 animate-pulse" />
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="h-8 w-20 rounded-full bg-slate-200/80 animate-pulse" />
+                <div className="h-8 w-24 rounded-full bg-slate-200/80 animate-pulse" />
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    )
+  }
+
+  // Chọn nội dung phù hợp: skeleton, empty state hoặc danh sách sản phẩm.
+  function renderProductList() {
+    if (shouldRenderSkeleton) {
+      return renderProductSkeletons()
+    }
+
+    if (productList.length === 0) {
+      return (
+        <div className="surface-secondary px-6 py-16 text-center text-slate-500">
+          Không có sản phẩm phù hợp với bộ lọc hiện tại.
+        </div>
+      )
+    }
+
+    return (
+      <div className={shouldRenderSkeleton ? "grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))] opacity-60" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]"}>
+        {productList.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    )
+  }
+
+  // Thông báo nhỏ khi fetch sản phẩm gặp lỗi nhưng vẫn giữ layout.
   return (
     <section className="py-6 sm:py-8">
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
@@ -94,20 +147,8 @@ export default function ProductCatalog({ categories, filters, productsPage }: Pr
 
           {isPending ? (
             <Loading />
-          ) : !productsPage.success ? (
-            <div className="surface-secondary px-6 py-16 text-center text-slate-500">
-              {productsPage.error?.message ?? productsPage.message}
-            </div>
-          ) : productList.length === 0 ? (
-            <div className="surface-secondary px-6 py-16 text-center text-slate-500">
-              Không có sản phẩm phù hợp với bộ lọc hiện tại.
-            </div>
           ) : (
-            <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(235px,1fr))]">
-              {productList.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            renderProductList()
           )}
 
           {totalPages > 0 ? (

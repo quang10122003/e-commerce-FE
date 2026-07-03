@@ -12,6 +12,8 @@ async function getHomeInitialData() {
   return {
     categories: categoriesResult.status === "fulfilled" ? categoriesResult.value.data ?? [] : [],
     topSellingProducts: topProductsResult.status === "fulfilled" ? topProductsResult.value.data ?? [] : [],
+    hasCategoriesError: categoriesResult.status !== "fulfilled",
+    hasTopSellingProductsError: topProductsResult.status !== "fulfilled",
   }
 }
 

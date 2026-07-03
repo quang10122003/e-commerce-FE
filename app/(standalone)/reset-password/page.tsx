@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { cn } from "@/lib/cn"
 import { getApiResponseMessage } from "@/lib/error"
-import { useSearchParams } from "next/navigation"
+import {  useRouter, useSearchParams } from "next/navigation"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +21,7 @@ type ResetPasswordFormValues = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ResetPasswordPage() {
+  const router = useRouter()
   /** Hiện mật khẩu mới dạng text hay dạng ẩn */
   const [showPassword, setShowPassword] = useState(false)
 
@@ -55,6 +56,10 @@ export default function ResetPasswordPage() {
 
   // ─── Submit handler ──────────────────────────────────────────────────────
 
+  function handleSucscer(){
+    const doamin = process.env.NEXT_PUBLIC_APP_URL
+    router.replace(`${doamin}/?auth=login`)
+  }
   async function handleSubmitForm(data: ResetPasswordFormValues) {
     try {
       clearErrors("root")
@@ -110,7 +115,7 @@ export default function ResetPasswordPage() {
               type="button"
               className="mt-2 h-12 w-full"
               // TODO: điều hướng về trang chủ hoặc mở modal login
-              onClick={() => { }}
+              onClick={handleSucscer}
             >
               Về trang đăng nhập
             </MainButton>
