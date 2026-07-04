@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input"
 import MainButton from "@/components/ui/main-button"
 import { useNotification } from "@/components/ui/NotificationProvider"
 import { cn } from "@/lib/cn"
-import { getApiResponseMessage } from "@/lib/error"
+import { extractErrorMessage } from "@/lib/error"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -158,6 +158,7 @@ export default function AuthModal() {
 
   /** Theo dõi giá trị password để validate confirmPassword */
   const password = useWatch({ control, name: "password" })
+  const Url_Login_GG = process.env.NEXT_PUBLIC_URL_LOGIN_GG
 
   // ─── Form: Forgot Password ─────────────────────────────────────────────────
 
@@ -297,13 +298,10 @@ export default function AuthModal() {
         router.replace(redirectUrl)
       }
     } catch (error) {
+      console.log(error)
       setError("root", {
         type: "server",
-        message: getApiResponseMessage(
-          typeof error === "object" && error !== null && "data" in error
-            ? (error as { data?: unknown }).data
-            : null,
-          "Không thể xử lý yêu cầu. Vui lòng thử lại."
+        message: extractErrorMessage(error
         ),
       })
     }
@@ -335,14 +333,23 @@ export default function AuthModal() {
     } catch (error) {
       setForgotError("root", {
         type: "server",
-        message: getApiResponseMessage(
-          typeof error === "object" && error !== null && "data" in error
-            ? (error as { data?: unknown }).data
-            : null,
-          "Không thể xử lý yêu cầu. Vui lòng thử lại."
+        message: extractErrorMessage(
+         error
         ),
       })
     }
+  }
+  // xử lý login google
+  function handleLoginGG(){
+    if(Url_Login_GG){
+      router.push(Url_Login_GG)
+    }else{
+      setError("root",{
+        type:"server",
+        message:"lỗi đường dẫn đăng nhập gg"
+      })
+    }
+    
   }
 
   // ─── Render helpers ────────────────────────────────────────────────────────
@@ -507,9 +514,7 @@ export default function AuthModal() {
           <button
             type="button"
             className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-slate-300 bg-white text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-            onClick={() => {
-              // TODO: Thêm logic đăng nhập bằng Google tại đây
-            }}
+            onClick={handleLoginGG}
           >
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm">
               <svg viewBox="0 0 46 46" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

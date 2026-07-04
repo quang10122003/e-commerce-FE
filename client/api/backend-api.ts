@@ -50,6 +50,11 @@ function isFailedApiResponse(data: unknown) {
   )
 }
 
+// Các endpoint auth "vào cửa" — 401 ở đây là lỗi nghiệp vụ bình thường
+// (sai mật khẩu / email đã tồn tại...), KHÔNG phải phiên hết hạn,
+// nên không được kích hoạt logic auto-logout / resetApiState.
+const AUTH_ENTRY_ENDPOINTS = new Set(["login", "signup"])
+
 // Chuẩn hóa lỗi proxy và mở login khi API riêng tư phía client mất auth.
 const backendBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
@@ -68,7 +73,9 @@ const backendBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
     }
   }
 
-  if (result.error?.status === 401) {
+  const isAuthEntryEndpoint = AUTH_ENTRY_ENDPOINTS.has(api.endpoint)
+
+  if (result.error?.status === 401 && !isAuthEntryEndpoint) {
     clearAuthenticatedUser(api.dispatch)
     // Xoa cache API cu de UI khong hien gio hang/don hang stale.
     api.dispatch(backendApi.util.resetApiState())
@@ -203,19 +210,19 @@ export const backendApi = createApi({
         url: `/chat/rooms/${roomId}/read`,
       }),
     }),
-    forgotPassword: builder.mutation<ApiResponseType<null>,ForgotPasswordRequest>({
-      query: (body) =>({
+    forgotPassword: builder.mutation<ApiResponseType<null>, ForgotPasswordRequest>({
+      query: (body) => ({
         method: "POST",
         url: "/auth/forgot-password",
-        body:body
-      })
+        body: body,
+      }),
     }),
-    resetPassword: builder.mutation<ApiResponseType<null>,ResetPasswordRequest>({
-      query: (body) =>({
-        method:"POST",
+    resetPassword: builder.mutation<ApiResponseType<null>, ResetPasswordRequest>({
+      query: (body) => ({
+        method: "POST",
         url: "/auth/reset-password",
-        body:body
-      })
+        body: body,
+      }),
     }),
     getQr: builder.mutation<ApiResponseType<QrRepone>, QrRquest>({
       query: (body) => ({
@@ -250,5 +257,5 @@ export const {
   useRemoveCartItemMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
-  useGetQrMutation
+  useGetQrMutation,
 } = backendApi
