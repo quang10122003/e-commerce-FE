@@ -78,6 +78,11 @@ export default function HeroSection() {
               alt="MyShop featured collection"
               className="aspect-[4/4.3] w-full object-cover"
               src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1200&q=80"
+              priority
+              fetchPriority="high"
+              decoding="async"
+              quality={75}
+              sizes="(min-width: 1024px) 40vw, 100vw"
             />
           </div>
 

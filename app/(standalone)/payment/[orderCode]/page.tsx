@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useGetQrMutation } from "@/client/api/backend-api";
+import SafeImage from "@/components/shared/SafeImage";
 import { extractErrorMessage } from "@/lib/error";
 import { usePaymentSocket, PaymentNotification } from "@/client/socket/payment/usePaymentSocket";
 
@@ -175,7 +175,16 @@ export default function QrPage() {
                             <>
                                 {/* QR image — ẩn khi hết hạn */}
                                 {!isExpired && (
-                                    <Image src={qrData.url} alt="QR Code" width={250} height={250} />
+                                    // Ảnh QR hoặc khung báo khi backend chưa trả URL.
+                                    <SafeImage
+                                        src={qrData.url}
+                                        alt="QR Code"
+                                        width={250}
+                                        height={250}
+                                        className="h-[250px] w-[250px]"
+                                        fallbackClassName="h-[250px] w-[250px] rounded-lg"
+                                        fallbackLabel="QR chưa có"
+                                    />
                                 )}
 
                                 {/* Countdown */}

@@ -6,6 +6,7 @@ import ProductDetailPurchaseCard from "@/components/Products/detail/ProductDetai
 import ProductDetailSpecifications from "@/components/Products/detail/ProductDetailSpecifications"
 import ProductDetailSummary from "@/components/Products/detail/ProductDetailSummary"
 import Container from "@/components/shared/Container"
+import { hasImageSrc } from "@/lib/images"
 import { ProductDetail } from "@/types/product/productDeteilType"
 
 type ProductDetailClientProps = {
@@ -14,7 +15,8 @@ type ProductDetailClientProps = {
 
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const productdata: ProductDetail = product
-  const listImage: string[] = [productdata.thumbnail, ...productdata.url]
+  // Lọc các ảnh rỗng để gallery không render src không hợp lệ.
+  const listImage = [productdata.thumbnail, ...productdata.url].filter(hasImageSrc)
 
   return (
     <>

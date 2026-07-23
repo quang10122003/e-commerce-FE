@@ -10,7 +10,7 @@ export interface ProductType {
     stock: number;
     status: ProductStatus
     categoryId: number | null;
-    thumbnail: string ;
+    thumbnail: string | null;
     createdAt: string; // LocalDateTime
     updatedAt: string; // LocalDateTime
 }

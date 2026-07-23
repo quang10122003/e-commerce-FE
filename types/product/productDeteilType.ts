@@ -1,5 +1,5 @@
-import { ProductStatus } from "./ProductsummerType";
 import type { MoneyValue } from "@/types/money/MoneyValue";
+import { ProductStatus } from "./ProductsummerType";
 
 export type ProductDetail = {
     id: number;
@@ -9,7 +9,7 @@ export type ProductDetail = {
     price: MoneyValue;
     stock: number;
     status: ProductStatus;
-    nameCategory: string
-    thumbnail: string;
-    url: string[]; // List<String> → string[]
+    nameCategory: string;
+    thumbnail: string | null;
+    url: Array<string | null>;
 };

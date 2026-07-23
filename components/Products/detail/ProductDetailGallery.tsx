@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react"
-import Image from "next/image"
 
+import SafeImage from "@/components/shared/SafeImage"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/cn"
 
@@ -60,39 +60,51 @@ export default function ProductDetailGallery({ images }: ProductDetailGalleryPro
             </>
           ) : null}
 
-          <Image
+          {/* Ảnh chính hoặc khung báo thiếu ảnh. */}
+          <SafeImage
             width={900}
             height={900}
             alt=""
             className="aspect-[4/4.2] w-full object-cover sm:aspect-[4/3.75]"
             src={currentImage}
+            priority
+            fetchPriority="high"
+            quality={75}
+            sizes="(min-width: 1024px) 50vw, 100vw"
           />
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
-          {images.map((image, index) => (
-            <button
-              key={`${image}-${index}`}
-              type="button"
-              onClick={() => setActiveImage(index)}
-              className={cn(
-                "overflow-hidden rounded-[12px] border bg-slate-50 transition-colors",
-                activeImage === index
-                  ? "border-[#bfd2f6] bg-primary-soft"
-                  : "border-border hover:border-[#bfd2f6]"
-              )}
-              aria-label={`View image ${index + 1}`}
-            >
-              <Image
-                width={400}
-                height={400}
-                alt=""
-                className="aspect-square w-full object-cover"
-                src={image}
-              />
-            </button>
-          ))}
-        </div>
+        {/* Danh sách ảnh nhỏ chỉ hiển thị khi có ảnh hợp lệ. */}
+        {images.length > 0 ? (
+          <div className="grid grid-cols-4 gap-2">
+            {images.map((image, index) => (
+              <button
+                key={`${image}-${index}`}
+                type="button"
+                onClick={() => setActiveImage(index)}
+                className={cn(
+                  "overflow-hidden rounded-[12px] border bg-slate-50 transition-colors",
+                  activeImage === index
+                    ? "border-[#bfd2f6] bg-primary-soft"
+                    : "border-border hover:border-[#bfd2f6]"
+                )}
+                aria-label={`View image ${index + 1}`}
+              >
+                <SafeImage
+                  width={400}
+                  height={400}
+                  alt=""
+                  className="aspect-square w-full object-cover"
+                  src={image}
+                  loading="lazy"
+                  decoding="async"
+                  quality={75}
+                  sizes="(min-width: 1024px) 120px, 25vw"
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )

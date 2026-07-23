@@ -1,9 +1,9 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 
 import { useAddCartMutation } from "@/client/api/backend-api"
+import SafeImage from "@/components/shared/SafeImage"
 import { Card, CardContent } from "@/components/ui/card"
 import MainButton from "@/components/ui/main-button"
 import { formatCurrency } from "@/lib/format"
@@ -66,13 +66,18 @@ export default function ProductCard({ product }: ProductCardProps) {
     <Card className="group flex min-h-107 flex-col overflow-hidden rounded-[10px] border-slate-200/80 transition-transform duration-300 hover:-translate-y-1 sm:min-h-0">
       {/* Thumbnail */}
       <div className="relative aspect-[4/4.8] overflow-hidden bg-slate-100 sm:aspect-4/3">
-        <Image
+        {/* Ảnh sản phẩm hoặc khung báo thiếu ảnh. */}
+        <SafeImage
           width={400}
           height={400}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          fallbackClassName="transition-transform duration-500 group-hover:scale-105"
           src={product.thumbnail}
           alt={product.name}
           loading="lazy"
+          decoding="async"
+          quality={75}
+          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
         />
 
         {/* Out-of-stock overlay */}

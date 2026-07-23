@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import SafeImage from "@/components/shared/SafeImage"
 import { Category } from "@/types/category/Category"
 import { cn } from "@/lib/cn"
 
@@ -15,14 +16,19 @@ export default function CategoryCard({ category }: CategoryCardProps) {
     >
       <div
         className={cn(
-          "overflow-hidden rounded-[16px] border border-border bg-slate-50 transition-colors duration-200 group-hover:border-[#bfd2f6] group-hover:bg-primary-soft"
+          "relative aspect-[4/3] overflow-hidden rounded-[16px] border border-border bg-slate-50 transition-colors duration-200 group-hover:border-[#bfd2f6] group-hover:bg-primary-soft"
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        {/* Ảnh danh mục hoặc trạng thái ảnh bị thiếu. */}
+        <SafeImage
+          fill
           src={category.image}
           alt={category.name}
-          className="aspect-[4/3] h-full w-full object-cover"
+          sizes="176px"
+          loading="lazy"
+          decoding="async"
+          quality={75}
+          className="object-cover"
         />
       </div>
       <div className="space-y-1 px-1">
